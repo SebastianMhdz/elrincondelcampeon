@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
+import { getProfilesMap, displayNameOf } from "@/lib/profile";
+import UserAvatar from "./UserAvatar";
 
 interface Review {
   id: string;
@@ -12,6 +14,7 @@ interface Review {
   comment: string;
   created_at: string;
   display_name?: string | null;
+  avatar_url?: string | null;
 }
 
 interface Props { canchaId: string; user: User | null; text: Translation; onGoAccount: () => void; }
@@ -32,11 +35,12 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
       .eq("cancha_id", canchaId)
       .order("created_at", { ascending: false });
     if (data) {
-      // fetch display names for these user_ids
       const userIds = Array.from(new Set(data.map(r => r.user_id)));
-      const { data: profiles } = await supabase.from("profiles").select("user_id, display_name, custom_name").in("user_id", userIds);
-      const map = new Map((profiles ?? []).map(p => [p.user_id, p.custom_name || p.display_name || null]));
-      setReviews(data.map(r => ({ ...r, display_name: map.get(r.user_id) ?? null })));
+      const map = await getProfilesMap(userIds);
+      setReviews(data.map(r => {
+        const p = map.get(r.user_id);
+        return { ...r, display_name: displayNameOf(p, "Anónimo"), avatar_url: p?.avatar_url ?? null };
+      }));
     }
     setLoading(false);
   };
@@ -89,19 +93,22 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
         <ul className="space-y-2">
           {reviews.map(r => (
             <li key={r.id} className="rounded-lg border border-border bg-background/50 p-3">
-              <div className="mb-1 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-foreground">{r.display_name || text.anonymousUser}</span>
-                  <div className="flex">{Array.from({length: r.rating}).map((_,i) => <Star key={i} className="h-3 w-3 fill-primary text-primary" />)}</div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <UserAvatar avatarId={r.avatar_url} name={r.display_name} size="sm" />
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-foreground">{r.display_name || text.anonymousUser}</p>
+                    <div className="flex">{Array.from({length: r.rating}).map((_,i) => <Star key={i} className="h-3 w-3 fill-primary text-primary" />)}</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
                   {user && user.id === r.user_id && (
                     <button onClick={() => remove(r.id)} className="text-destructive hover:opacity-70" aria-label="delete"><Trash2 className="h-3 w-3" /></button>
                   )}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">{r.comment}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{r.comment}</p>
             </li>
           ))}
         </ul>
