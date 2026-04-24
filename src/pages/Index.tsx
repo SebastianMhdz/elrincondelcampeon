@@ -12,6 +12,7 @@ import MisReservasSection from "@/components/MisReservasSection";
 import AccountSection from "@/components/AccountSection";
 import FooterSection from "@/components/FooterSection";
 import RickyBot from "@/components/RickyBot";
+import UserMenu from "@/components/UserMenu";
 import type { Cancha } from "@/data/canchas";
 import { applyTheme, type ThemeMode } from "@/lib/theme";
 import { defaultBranding, getBrandingSettings, type BrandingSettings } from "@/lib/site-settings";
@@ -59,12 +60,12 @@ const Index = () => {
         />
         <main className="min-w-0 flex-1 md:ml-24 md:pl-2">
           <header className="sticky top-0 z-20 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-md md:px-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-foreground">{branding.siteName}</p>
-                <p className="text-xs text-muted-foreground line-clamp-1">{branding.tagline}</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-foreground">{branding.siteName}</p>
+                <p className="truncate text-xs text-muted-foreground">{branding.tagline}</p>
               </div>
-              {user && <p className="hidden text-xs text-muted-foreground md:block">{text.signedInAs}: <strong className="text-foreground">{user.email}</strong></p>}
+              <UserMenu user={user} onGoAccount={() => setTab("cuenta")} />
             </div>
           </header>
 
