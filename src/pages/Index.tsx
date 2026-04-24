@@ -46,6 +46,7 @@ const Index = () => {
 
   const handleMapSelect = (c: Cancha) => { setMapCancha(c); setTab("mapa"); };
   const handleReserveSelect = (c: Cancha) => { setReservaCancha(c); setTab("reservar"); };
+  const handleSelectTournament = (id: string) => { setSelectedTournament(id); setTab("torneos"); };
 
   const isMain = tab === "canchas";
 
@@ -53,7 +54,7 @@ const Index = () => {
     <div className="min-h-screen bg-stadium-surface">
       <div className="flex min-h-screen w-full flex-col">
         <AppSidebar
-          active={tab} onChange={setTab}
+          active={tab} onChange={(t) => { setTab(t); if (t !== "torneos") setSelectedTournament(null); }}
           locale={locale} onLocaleChange={setLocale}
           darkMode={theme === "dark"} onDarkModeChange={(v) => setTheme(v ? "dark" : "light")}
           text={text} branding={branding} onBrandingChange={setBranding}
@@ -71,9 +72,13 @@ const Index = () => {
 
           <div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
             {isMain && <HeroSection branding={branding} text={text} />}
-            <NavTabs active={tab} onChange={setTab} labels={{ canchas: text.courts, mapa: text.map, rutas: text.routes, reservar: text.reserve, soporte: text.support, "mis-reservas": text.myReservations, cuenta: text.account }} />
+            <NavTabs active={tab} onChange={(t) => { setTab(t); if (t !== "torneos") setSelectedTournament(null); }} labels={{ inicio: "Inicio", canchas: text.courts, torneos: "Torneos", mapa: text.map, rutas: text.routes, reservar: text.reserve, soporte: text.support, "mis-reservas": text.myReservations, cuenta: text.account }} />
 
+            {tab === "inicio" && <HomeSection text={text} branding={branding} onNavigate={setTab} onSelectCancha={(c) => { setReservaCancha(c); setTab("canchas"); }} onSelectTournament={handleSelectTournament} />}
             {tab === "canchas" && <CanchasSection onMapSelect={handleMapSelect} onReserveSelect={handleReserveSelect} text={text} user={user} onGoAccount={() => setTab("cuenta")} />}
+            {tab === "torneos" && (selectedTournament
+              ? <TournamentDetail tournamentId={selectedTournament} user={user} onBack={() => setSelectedTournament(null)} onGoAccount={() => setTab("cuenta")} />
+              : <TorneosSection user={user} onSelectTournament={handleSelectTournament} onGoAccount={() => setTab("cuenta")} />)}
             {tab === "mapa" && <MapSection initialCancha={mapCancha} text={text} />}
             {tab === "rutas" && <RutasSection initialCancha={mapCancha} text={text} />}
             {tab === "reservar" && <ReservaSection initialCancha={reservaCancha} text={text} user={user} onGoAccount={() => setTab("cuenta")} />}
