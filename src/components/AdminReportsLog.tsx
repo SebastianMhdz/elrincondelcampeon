@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Translation } from "@/lib/i18n";
+import { getProfilesMap, displayNameOf } from "@/lib/profile";
+import UserAvatar from "./UserAvatar";
 
 interface Report {
   id: string;
+  user_id: string | null;
   name: string;
   email: string;
   subject: string;
@@ -12,6 +15,8 @@ interface Report {
   status: string;
   category: string | null;
   created_at: string;
+  _profileName?: string;
+  _profileAvatar?: string | null;
 }
 
 const AdminReportsLog = ({ text }: { text: Translation }) => {
@@ -21,7 +26,13 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from("support_reports").select("*").order("created_at", { ascending: false }).limit(50);
-    setReports((data as Report[]) ?? []);
+    const list = (data as Report[]) ?? [];
+    const userIds = Array.from(new Set(list.map(r => r.user_id).filter(Boolean) as string[]));
+    const map = await getProfilesMap(userIds);
+    setReports(list.map(r => {
+      const p = r.user_id ? map.get(r.user_id) : null;
+      return { ...r, _profileName: p ? displayNameOf(p, r.name) : r.name, _profileAvatar: p?.avatar_url ?? null };
+    }));
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -42,9 +53,12 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
           {reports.map(r => (
             <li key={r.id} className="rounded-md border border-border bg-card p-3 text-xs">
               <div className="mb-1 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground">{r.subject}</p>
-                  <p className="text-muted-foreground">{r.name} · {r.email}</p>
+                <div className="flex min-w-0 items-start gap-2">
+                  <UserAvatar avatarId={r._profileAvatar} name={r._profileName} size="sm" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground">{r.subject}</p>
+                    <p className="truncate text-muted-foreground">{r._profileName} · {r.email}</p>
+                  </div>
                 </div>
                 <select value={r.status} onChange={(e) => updateStatus(r.id, e.target.value)} className="rounded border border-border bg-background px-1 py-0.5 text-[10px] text-foreground">
                   <option value="open">{text.statusOpen}</option>
