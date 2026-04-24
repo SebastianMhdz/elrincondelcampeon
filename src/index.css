@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 33% 97%;
+    --foreground: 222 59% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 59% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 59% 11%;
+
+    --primary: 43 82% 49%;
+    --primary-foreground: 222 59% 11%;
+
+    --secondary: 212 60% 92%;
+    --secondary-foreground: 221 55% 19%;
+
+    --muted: 210 26% 92%;
+    --muted-foreground: 219 17% 38%;
+
+    --accent: 151 61% 27%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 216 27% 82%;
+    --input: 216 27% 82%;
+    --ring: 43 82% 49%;
+
+    --radius: 0.75rem;
+
+    --field-green: 151 61% 27%;
+    --field-green-light: 146 38% 92%;
+    --field-green-dark: 221 64% 14%;
+    --gold: 43 82% 49%;
+    --gold-light: 45 85% 94%;
+    --transit-blue: 216 67% 35%;
+    --transit-blue-light: 217 72% 94%;
+    --uber-black: 222 59% 11%;
+    --time-orange: 25 95% 50%;
+    --time-orange-light: 25 90% 95%;
+
+    --panel-bg: 0 0% 100%;
+    --panel-glass: 0 0% 100%;
+    --panel-glass-alpha: 0.92;
+
+    --sidebar-background: 220 50% 12%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 220 57% 16%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 46% 19%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 218 39% 24%;
+    --sidebar-ring: 43 82% 49%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 30% 96%;
+    --card: 220 38% 14%;
+    --card-foreground: 210 30% 96%;
+    --popover: 220 38% 14%;
+    --popover-foreground: 210 30% 96%;
+    --primary: 43 92% 58%;
+    --primary-foreground: 222 59% 11%;
+    --secondary: 219 28% 22%;
+    --secondary-foreground: 210 30% 96%;
+    --muted: 220 24% 20%;
+    --muted-foreground: 215 22% 78%;
+    --accent: 151 56% 45%;
+    --accent-foreground: 222 59% 11%;
+    --border: 220 23% 28%;
+    --input: 220 23% 28%;
+    --ring: 43 92% 58%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 210 40% 98%;
+
+    --field-green: 151 56% 45%;
+    --field-green-light: 220 30% 18%;
+    --field-green-dark: 222 47% 6%;
+    --gold: 43 92% 58%;
+    --gold-light: 220 30% 18%;
+    --transit-blue: 216 80% 60%;
+    --transit-blue-light: 220 30% 18%;
+    --time-orange: 25 95% 60%;
+    --time-orange-light: 220 30% 18%;
+
+    --panel-bg: 220 38% 14%;
+    --panel-glass: 220 38% 14%;
+    --panel-glass-alpha: 0.85;
+
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 30% 96%;
+    --sidebar-primary: 222 47% 10%;
+    --sidebar-primary-foreground: 210 30% 96%;
+    --sidebar-accent: 220 35% 16%;
+    --sidebar-accent-foreground: 210 30% 96%;
+    --sidebar-border: 220 26% 22%;
+    --sidebar-ring: 43 92% 58%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient-hero {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, hsl(var(--field-green-dark)) 0%, hsl(220 50% 18%) 60%, hsl(var(--accent)) 100%);
+  }
+
+  .glass-card {
+    background: hsl(var(--card) / 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .field-card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .field-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px hsl(var(--foreground) / 0.18);
+  }
+
+  .bg-sporty-pattern {
+    background-color: hsl(var(--background));
+  }
+
+  .bg-stadium-surface {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(ellipse 700px 500px at 10% 0%, hsl(var(--accent) / 0.08), transparent 60%),
+      radial-gradient(ellipse 600px 500px at 90% 100%, hsl(var(--primary) / 0.07), transparent 60%);
+  }
+
+  .section-sport-panel {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 26px 70px -42px hsl(var(--foreground) / 0.25);
+  }
+}
