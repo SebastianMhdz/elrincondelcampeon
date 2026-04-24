@@ -4,6 +4,9 @@ import AppSidebar from "@/components/AppSidebar";
 import NavTabs from "@/components/NavTabs";
 import type { Tab } from "@/components/NavTabs";
 import CanchasSection from "@/components/CanchasSection";
+import HomeSection from "@/components/HomeSection";
+import TorneosSection from "@/components/TorneosSection";
+import TournamentDetail from "@/components/TournamentDetail";
 import MapSection from "@/components/MapSection";
 import RutasSection from "@/components/RutasSection";
 import ReservaSection from "@/components/ReservaSection";
@@ -21,9 +24,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const Index = () => {
-  const [tab, setTab] = useState<Tab>("canchas");
+  const [tab, setTab] = useState<Tab>("inicio");
   const [mapCancha, setMapCancha] = useState<Cancha | null>(null);
   const [reservaCancha, setReservaCancha] = useState<Cancha | null>(null);
+  const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>(() => (localStorage.getItem("app-locale") as Locale) || "es");
   const [theme, setTheme] = useState<ThemeMode>(() => (localStorage.getItem("app-theme") as ThemeMode) || "light");
   const [branding, setBranding] = useState<BrandingSettings>(defaultBranding);
