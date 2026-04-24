@@ -125,8 +125,8 @@ const HomeSection = ({ branding, onNavigate, onSelectCancha, onSelectTournament 
             <button key={c.id} onClick={() => { onSelectCancha(c); }} className="group overflow-hidden rounded-xl border border-border bg-card text-left transition hover:border-primary hover:shadow-md">
               <div className="relative h-28 overflow-hidden">
                 <img src={c.image} alt={c.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
-                <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> {c.rating}
+                <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-bold text-background backdrop-blur">
+                  <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
                 </div>
               </div>
               <div className="p-3">
