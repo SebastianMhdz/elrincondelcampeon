@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarCheck2, ChevronRight, Headphones, LayoutGrid, MapPinned, Route, ClipboardList, UserCircle } from "lucide-react";
+import { CalendarCheck2, ChevronRight, Headphones, LayoutGrid, MapPinned, Route, ClipboardList, UserCircle, Home, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tab } from "@/components/NavTabs";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -23,7 +23,9 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
   const [hovered, setHovered] = useState(false);
   const expanded = hovered;
   const items: { id: Tab; label: string; hint: string; icon: typeof LayoutGrid }[] = [
+    { id: "inicio", label: "Inicio", hint: "Recepción y novedades", icon: Home },
     { id: "canchas", label: text.courts, hint: text.courtsHint, icon: LayoutGrid },
+    { id: "torneos", label: "Torneos", hint: "Eventos programados", icon: Trophy },
     { id: "mapa", label: text.map, hint: text.mapHint, icon: MapPinned },
     { id: "rutas", label: text.routes, hint: text.routesHint, icon: Route },
     { id: "reservar", label: text.reserve, hint: text.reserveHint, icon: CalendarCheck2 },
@@ -44,7 +46,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
       )}
     >
       <div className="border-b border-white/10 p-4">
-        <button onClick={() => onChange("canchas")} className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left backdrop-blur-sm transition hover:bg-white/10">
+        <button onClick={() => onChange("inicio")} className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left backdrop-blur-sm transition hover:bg-white/10">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
             <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain p-0.5" />
           </div>

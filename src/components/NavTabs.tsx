@@ -1,6 +1,6 @@
-import { MapPin, Route, CalendarCheck, Headphones, LayoutGrid, ClipboardList } from "lucide-react";
+import { MapPin, Route, CalendarCheck, Headphones, LayoutGrid, ClipboardList, Home, Trophy } from "lucide-react";
 
-type Tab = "canchas" | "mapa" | "rutas" | "reservar" | "soporte" | "mis-reservas" | "cuenta";
+type Tab = "inicio" | "canchas" | "torneos" | "mapa" | "rutas" | "reservar" | "soporte" | "mis-reservas" | "cuenta";
 
 interface NavTabsProps {
   active: Tab;
@@ -9,7 +9,9 @@ interface NavTabsProps {
 }
 
 const tabs: { id: Tab; defaultLabel: string; icon: React.ReactNode }[] = [
+  { id: "inicio", defaultLabel: "Inicio", icon: <Home className="w-4 h-4" /> },
   { id: "canchas", defaultLabel: "Canchas", icon: <LayoutGrid className="w-4 h-4" /> },
+  { id: "torneos", defaultLabel: "Torneos", icon: <Trophy className="w-4 h-4" /> },
   { id: "mapa", defaultLabel: "Mapa", icon: <MapPin className="w-4 h-4" /> },
   { id: "rutas", defaultLabel: "Rutas", icon: <Route className="w-4 h-4" /> },
   { id: "reservar", defaultLabel: "Reservar", icon: <CalendarCheck className="w-4 h-4" /> },

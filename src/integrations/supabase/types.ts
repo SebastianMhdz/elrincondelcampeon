@@ -339,6 +339,150 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_announcements: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          title: string
+          tournament_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          title: string
+          tournament_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          title?: string
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_announcements_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_signups: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          team_name: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          team_name: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          team_name?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_signups_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          banner_url: string | null
+          cancha_id: string
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          end_date: string
+          entry_fee: string | null
+          format: string
+          id: string
+          max_teams: number
+          name: string
+          organizer_id: string
+          prize: string | null
+          signups_open: boolean
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          cancha_id: string
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          end_date: string
+          entry_fee?: string | null
+          format?: string
+          id?: string
+          max_teams?: number
+          name: string
+          organizer_id: string
+          prize?: string | null
+          signups_open?: boolean
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          cancha_id?: string
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          entry_fee?: string | null
+          format?: string
+          id?: string
+          max_teams?: number
+          name?: string
+          organizer_id?: string
+          prize?: string | null
+          signups_open?: boolean
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_cancha_id_fkey"
+            columns: ["cancha_id"]
+            isOneToOne: false
+            referencedRelation: "canchas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
