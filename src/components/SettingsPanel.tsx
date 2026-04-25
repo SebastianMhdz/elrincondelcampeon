@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import CanchaAdminPanel from "@/components/CanchaAdminPanel";
 
 interface SettingsPanelProps {
   locale: Locale;
@@ -160,6 +161,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
                 </div>
                 <div className="space-y-2"><Label>{text.footerAuthors}</Label><Input value={form.authors.join(", ")} onChange={(e) => setForm({ ...form, authors: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} /></div>
                 <Button onClick={saveBranding} disabled={savingBranding} className="bg-primary text-primary-foreground">{savingBranding ? "..." : text.saveChanges}</Button>
+                <CanchaAdminPanel />
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">{text.adminOnlyMessage}</div>

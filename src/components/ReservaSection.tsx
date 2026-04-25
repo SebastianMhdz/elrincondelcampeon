@@ -73,8 +73,8 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
-    const cancha = canchas[Number(canchaId)];
-    const canchaDb = dbCanchas.find((item) => item.legacy_id === Number(canchaId));
+    const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+    const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? canchas[0];
     setSending(true);
     if (!canchaDb) {
       toast({ title: text.errorTitle, description: "Cancha no disponible", variant: "destructive" });
@@ -134,7 +134,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <label className={labelClass}>{text.court}</label>
           <select value={canchaId} onChange={(e) => setCanchaId(e.target.value)} className={inputClass}>
             <option value="">{text.selectCourtPlaceholder}</option>
-            {canchas.map((c) => <option key={c.id} value={c.id}>{c.name} – {c.precio}</option>)}
+            {dbCanchas.length > 0
+              ? dbCanchas.map((c) => <option key={c.id} value={c.id}>{c.name} – {c.precio}</option>)
+              : canchas.map((c) => <option key={c.id} value={String(c.id)}>{c.name} – {c.precio}</option>)}
           </select>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

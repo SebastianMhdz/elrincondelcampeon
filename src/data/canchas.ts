@@ -33,6 +33,9 @@ export interface Cancha {
   icon: string;
   tipo: string;
   image: string;
+  benefits?: string[];
+  socialLinks?: { instagram?: string; facebook?: string; website?: string };
+  galleryUrls?: string[];
 }
 
 export const canchas: Cancha[] = [

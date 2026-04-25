@@ -10,6 +10,16 @@ const parseStringArray = (value: unknown): string[] => {
   return value.filter((item): item is string => typeof item === "string");
 };
 
+const parseSocialLinks = (value: unknown): Cancha["socialLinks"] => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const obj = value as Record<string, unknown>;
+  return {
+    instagram: typeof obj.instagram === "string" ? obj.instagram : undefined,
+    facebook: typeof obj.facebook === "string" ? obj.facebook : undefined,
+    website: typeof obj.website === "string" ? obj.website : undefined,
+  };
+};
+
 const parseRutas = (value: unknown): Ruta[] => {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is Ruta => {
@@ -36,6 +46,9 @@ export const mapCanchaRow = (row: CanchaRow, fallbackImage?: string): Cancha => 
   reviews: parseStringArray(row.reviews),
   icon: row.icon ?? "⚽",
   tipo: row.tipo ?? "Cancha sintética",
+  benefits: parseStringArray((row as any).benefits),
+  socialLinks: parseSocialLinks((row as any).social_links),
+  galleryUrls: parseStringArray((row as any).gallery_urls),
   image: row.image_url || fallbackImage || fallbackCanchas[row.legacy_id ?? 0]?.image || fallbackCanchas[0].image,
 });
 

@@ -79,7 +79,9 @@ export type Database = {
       canchas: {
         Row: {
           addr: string
+          benefits: Json
           created_at: string
+          gallery_urls: Json
           hours: string | null
           icon: string | null
           id: string
@@ -96,12 +98,15 @@ export type Database = {
           reviews_count: number | null
           rutas: Json
           servicios: Json
+          social_links: Json
           tipo: string | null
           updated_at: string
         }
         Insert: {
           addr: string
+          benefits?: Json
           created_at?: string
+          gallery_urls?: Json
           hours?: string | null
           icon?: string | null
           id?: string
@@ -118,12 +123,15 @@ export type Database = {
           reviews_count?: number | null
           rutas?: Json
           servicios?: Json
+          social_links?: Json
           tipo?: string | null
           updated_at?: string
         }
         Update: {
           addr?: string
+          benefits?: Json
           created_at?: string
+          gallery_urls?: Json
           hours?: string | null
           icon?: string | null
           id?: string
@@ -140,6 +148,7 @@ export type Database = {
           reviews_count?: number | null
           rutas?: Json
           servicios?: Json
+          social_links?: Json
           tipo?: string | null
           updated_at?: string
         }
@@ -523,6 +532,10 @@ export type Database = {
           _start_time: string
         }
         Returns: boolean
+      }
+      refresh_cancha_review_stats: {
+        Args: { _cancha_id: string }
+        Returns: undefined
       }
     }
     Enums: {

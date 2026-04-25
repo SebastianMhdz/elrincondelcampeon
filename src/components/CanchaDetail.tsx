@@ -11,7 +11,7 @@ import type { User } from "@supabase/supabase-js";
 interface Props { cancha: Cancha; onBack: () => void; onMap: (c: Cancha) => void; onReserve: (c: Cancha) => void; text: Translation; user: User | null; onGoAccount: () => void; }
 
 const CanchaDetail = ({ cancha, onBack, onMap, onReserve, text, user, onGoAccount }: Props) => {
-  const socials = canchaSocials[cancha.id] ?? {};
+  const socials = cancha.socialLinks ?? canchaSocials[cancha.id] ?? {};
   const [dbCanchaId, setDbCanchaId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,6 +65,19 @@ const CanchaDetail = ({ cancha, onBack, onMap, onReserve, text, user, onGoAccoun
               {cancha.servicios.map((s) => <div key={s} className="flex items-center gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 shrink-0 text-primary" />{s}</div>)}
             </div>
           </div>
+          {!!cancha.benefits?.length && (
+            <div className="mb-5">
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Beneficios</h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {cancha.benefits.map((b) => <div key={b} className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm font-medium text-foreground">{b}</div>)}
+              </div>
+            </div>
+          )}
+          {!!cancha.galleryUrls?.length && (
+            <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {cancha.galleryUrls.map((url) => <img key={url} src={url} alt={cancha.name} className="h-24 w-full rounded-lg object-cover" loading="lazy" />)}
+            </div>
+          )}
           <div className="mb-5">
             <h3 className="mb-3 text-sm font-semibold text-muted-foreground">{text.socialLinks}</h3>
             <div className="flex flex-wrap gap-2">
