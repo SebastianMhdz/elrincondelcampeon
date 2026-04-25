@@ -48,6 +48,15 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
     try {
       const { data: c } = await supabase.from("canchas").select("id").eq("legacy_id", Number(legacyId)).maybeSingle();
       if (!c?.id) throw new Error("Cancha no encontrada en la base de datos");
+      const { data: busyReservations } = await supabase
+        .from("reservations")
+        .select("id")
+        .eq("cancha_id", c.id)
+        .eq("status", "confirmed")
+        .gte("reservation_date", startDate)
+        .lte("reservation_date", endDate)
+        .limit(1);
+      if (busyReservations?.length) throw new Error("Ya hay una reserva confirmada en esa cancha durante esas fechas. Elige otra cancha o rango.");
       await createTournament({
         cancha_id: c.id,
         organizer_id: user.id,
