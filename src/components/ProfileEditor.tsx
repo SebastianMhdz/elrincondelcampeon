@@ -10,7 +10,7 @@ import { getProfile, upsertProfile, type UserProfile } from "@/lib/profile";
 import UserAvatar from "./UserAvatar";
 import { Check, Loader2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
-import { cn } from "@/lib/utils";
+import { cleanVisibleText, cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -40,20 +40,24 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
   }, [open, user.id, user.user_metadata]);
 
   const handleSave = async () => {
-    if (customName.trim().length > 60) {
+    const safeName = cleanVisibleText(customName);
+    const safeCountry = cleanVisibleText(country);
+    const safeBio = cleanVisibleText(bio);
+
+    if (safeName.length > 60) {
       toast({ title: "Nombre muy largo", description: "Máximo 60 caracteres", variant: "destructive" });
       return;
     }
-    if (bio.length > 280) {
+    if (safeBio.length > 280) {
       toast({ title: "Bio muy larga", description: "Máximo 280 caracteres", variant: "destructive" });
       return;
     }
     setSaving(true);
     try {
       const saved = await upsertProfile(user.id, {
-        custom_name: customName.trim() || null,
-        country: country.trim() || null,
-        bio: bio.trim() || null,
+        custom_name: safeName || null,
+        country: safeCountry || null,
+        bio: safeBio || null,
         avatar_url: avatarId,
         display_name: (user.user_metadata?.display_name as string) ?? null,
       });
@@ -86,25 +90,25 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
             <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/40 p-4">
               <UserAvatar avatarId={avatarId} name={customName} size="xl" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foreground">{customName || "Sin nombre"}</p>
+                <p className="truncate text-sm font-bold text-foreground">{cleanVisibleText(customName) || "Sin nombre"}</p>
                 <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                {country && <p className="text-xs text-muted-foreground">📍 {country}</p>}
+                {country && <p className="text-xs text-muted-foreground">📍 {cleanVisibleText(country)}</p>}
               </div>
             </div>
 
             <div>
               <Label htmlFor="custom-name">Nombre público</Label>
-              <Input id="custom-name" value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Ej. Juan Futbolista" maxLength={60} />
+              <Input id="custom-name" value={customName} onChange={(e) => setCustomName(cleanVisibleText(e.target.value))} placeholder="Ej. Juan Futbolista" maxLength={60} />
             </div>
 
             <div>
               <Label htmlFor="country">País</Label>
-              <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Ej. Colombia" maxLength={50} />
+              <Input id="country" value={country} onChange={(e) => setCountry(cleanVisibleText(e.target.value))} placeholder="Ej. Colombia" maxLength={50} />
             </div>
 
             <div>
               <Label htmlFor="bio">Bio (opcional)</Label>
-              <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Cuéntanos algo sobre ti..." maxLength={280} rows={3} />
+              <Textarea id="bio" value={bio} onChange={(e) => setBio(cleanVisibleText(e.target.value))} placeholder="Cuéntanos algo sobre ti..." maxLength={280} rows={3} />
               <p className="mt-1 text-right text-[10px] text-muted-foreground">{bio.length}/280</p>
             </div>
 
