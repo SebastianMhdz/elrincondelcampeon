@@ -4,6 +4,7 @@ import { canchas } from "@/data/canchas";
 import { Phone, MessageCircle, Send, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation } from "@/lib/i18n";
+import { cleanVisibleText } from "@/lib/utils";
 
 const SoporteSection = ({ text }: { text: Translation }) => {
   const { toast } = useToast();
@@ -25,14 +26,17 @@ const SoporteSection = ({ text }: { text: Translation }) => {
     window.open(`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola! Info sobre ${c.name}.`)}`, "_blank");
   };
   const enviar = async () => {
-    if (!nombre || !mensaje) { toast({ title: text.completeNameMessage, variant: "destructive" }); return; }
+    const safeName = cleanVisibleText(nombre);
+    const safeMessage = cleanVisibleText(mensaje);
+    const safeSubject = cleanVisibleText(asunto);
+    if (!safeName || !safeMessage) { toast({ title: text.completeNameMessage, variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("support_reports").insert({
       user_id: user?.id ?? null,
-      name: nombre,
+      name: safeName,
       email: contacto || (user?.email ?? "no-email"),
-      subject: asunto,
-      message: mensaje,
+      subject: safeSubject,
+      message: safeMessage,
       category: "general",
     });
     if (error) { toast({ title: text.errorTitle, description: error.message, variant: "destructive" }); return; }
@@ -83,12 +87,12 @@ const SoporteSection = ({ text }: { text: Translation }) => {
             </select>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div><label className={labelClass}>{text.name}</label><input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder={text.yourName} className={inputClass} /></div>
+            <div><label className={labelClass}>{text.name}</label><input value={nombre} onChange={(e) => setNombre(cleanVisibleText(e.target.value))} placeholder={text.yourName} className={inputClass} /></div>
             <div><label className={labelClass}>{text.contactInfo}</label><input value={contacto} onChange={(e) => setContacto(e.target.value)} className={inputClass} /></div>
           </div>
           <div>
             <label className={labelClass}>{text.message}</label>
-            <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} placeholder={text.describeQuery} className={`${inputClass} min-h-[80px] resize-y`} />
+            <textarea value={mensaje} onChange={(e) => setMensaje(cleanVisibleText(e.target.value))} placeholder={text.describeQuery} className={`${inputClass} min-h-[80px] resize-y`} />
           </div>
           <button onClick={enviar} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:opacity-90">
             <Send className="h-4 w-4" /> {text.sendMessage}
