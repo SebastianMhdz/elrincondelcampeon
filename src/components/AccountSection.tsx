@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, LogIn, UserPlus, LogOut } from "lucide-react";
+import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin } from "lucide-react";
 import type { Translation } from "@/lib/i18n";
+import ProfileEditor from "@/components/ProfileEditor";
+import UserAvatar from "@/components/UserAvatar";
+import { displayNameOf, getProfile, type UserProfile } from "@/lib/profile";
 
 interface Props {
   text: Translation;
@@ -17,6 +20,13 @@ const AccountSection = ({ text, user }: Props) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!user) { setProfile(null); return; }
+    getProfile(user.id).then(setProfile);
+  }, [user]);
 
   const handleSignUp = async () => {
     setLoading(true);
@@ -52,20 +62,48 @@ const AccountSection = ({ text, user }: Props) => {
   const inputClass = "w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
 
   if (user) {
+    const displayName = displayNameOf(profile, (user.user_metadata?.display_name as string) || user.email || text.anonymousUser);
     return (
       <div className="section-sport-panel rounded-[22px] p-6 md:p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UserCircle className="h-9 w-9" />
-          </div>
+        <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
           <div>
-            <h2 className="text-xl font-bold text-foreground">{user.user_metadata?.display_name ?? user.email}</h2>
-            <p className="text-sm text-muted-foreground">{text.signedInAs}: {user.email}</p>
+            <div className="mb-6 flex items-center gap-4">
+              <UserAvatar avatarId={profile?.avatar_url} name={displayName} size="xl" />
+              <div className="min-w-0">
+                <h2 className="truncate text-xl font-bold text-foreground">{displayName}</h2>
+                <p className="truncate text-sm text-muted-foreground">{text.signedInAs}: {user.email}</p>
+                {profile?.country && <p className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground"><MapPin className="h-3 w-3 text-primary" /> {profile.country}</p>}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setProfileOpen(true)} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                <Pencil className="h-4 w-4" /> Personalizar perfil
+              </button>
+              <button onClick={handleSignOut} className="flex items-center gap-2 rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90">
+                <LogOut className="h-4 w-4" /> {text.signOutBtn}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="mb-3 text-sm font-bold text-foreground">Vista previa pública</p>
+            <div className="rounded-xl border border-border bg-muted/40 p-4">
+              <div className="mb-3 flex items-center gap-3">
+                <UserAvatar avatarId={profile?.avatar_url} name={displayName} size="lg" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-foreground">{displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{profile?.country || "País sin definir"}</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">{profile?.bio || "Tu bio aparecerá aquí cuando la agregues."}</p>
+              <div className="mt-3 flex items-center gap-1 text-primary">
+                {[1,2,3,4,5].map((n) => <span key={n}>★</span>)}
+                <span className="ml-2 text-xs font-medium text-muted-foreground">Así se verá en reseñas</span>
+              </div>
+            </div>
           </div>
         </div>
-        <button onClick={handleSignOut} className="flex items-center gap-2 rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90">
-          <LogOut className="h-4 w-4" /> {text.signOutBtn}
-        </button>
+        <ProfileEditor open={profileOpen} onOpenChange={setProfileOpen} user={user} onSaved={setProfile} />
       </div>
     );
   }
