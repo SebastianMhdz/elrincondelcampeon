@@ -4,6 +4,8 @@ export type Translation = {
   // Sidebar / nav
   appName: string;
   tagline: string;
+  home: string;
+  tournaments: string;
   courts: string;
   map: string;
   routes: string;
