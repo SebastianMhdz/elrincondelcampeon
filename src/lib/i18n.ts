@@ -4,6 +4,8 @@ export type Translation = {
   // Sidebar / nav
   appName: string;
   tagline: string;
+  home: string;
+  tournaments: string;
   courts: string;
   map: string;
   routes: string;
@@ -246,6 +248,8 @@ export const translations: Record<Locale, Translation> = {
   es: {
     appName: "El Rincón Del Campeón",
     tagline: "Encuentra, compara y reserva la mejor cancha para tu partido y diversión en Barranquilla",
+    home: "Inicio",
+    tournaments: "Torneos",
     courts: "Canchas",
     map: "Mapa",
     routes: "Rutas",
@@ -460,6 +464,8 @@ export const translations: Record<Locale, Translation> = {
   en: {
     appName: "Champion's Corner",
     tagline: "Find, compare and book the best field for your match in Barranquilla",
+    home: "Home",
+    tournaments: "Tournaments",
     courts: "Courts", map: "Map", routes: "Routes", reserve: "Book", support: "Support", myReservations: "My Bookings",
     courtsHint: "Photos, data and details", mapHint: "Live route and location", routesHint: "Transport and access", reserveHint: "Time slot lock", supportHint: "Help and contact", myReservationsHint: "Your saved bookings",
     activeSection: "Active section", settings: "Settings", settingsHint: "Language, theme & admin",
@@ -556,6 +562,8 @@ export const translations: Record<Locale, Translation> = {
   pt: {
     appName: "O Canto do Campeão",
     tagline: "Encontre, compare e reserve o melhor campo para sua partida em Barranquilla",
+    home: "Início",
+    tournaments: "Torneios",
     courts: "Campos", map: "Mapa", routes: "Rotas", reserve: "Reservar", support: "Suporte", myReservations: "Minhas Reservas",
     courtsHint: "Fotos, dados e detalhes", mapHint: "Rota e localização ao vivo", routesHint: "Transporte e acesso", reserveHint: "Bloqueio de horários", supportHint: "Ajuda e contato", myReservationsHint: "Suas reservas salvas",
     activeSection: "Seção ativa", settings: "Configurações", settingsHint: "Idioma, tema e admin",
@@ -652,6 +660,8 @@ export const translations: Record<Locale, Translation> = {
   de: {
     appName: "Ecke des Champions",
     tagline: "Finde, vergleiche und buche den besten Platz für dein Spiel in Barranquilla",
+    home: "Start",
+    tournaments: "Turniere",
     courts: "Plätze", map: "Karte", routes: "Routen", reserve: "Buchen", support: "Support", myReservations: "Meine Buchungen",
     courtsHint: "Fotos, Daten, Details", mapHint: "Live-Route & Standort", routesHint: "Transport & Zugang", reserveHint: "Zeitfenster-Sperre", supportHint: "Hilfe & Kontakt", myReservationsHint: "Deine Buchungen",
     activeSection: "Aktiver Bereich", settings: "Einstellungen", settingsHint: "Sprache, Design & Admin",

@@ -1,12 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -19,14 +15,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Build context from canchas + reviews
+    // Build a general platform context from courts only.
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: canchas } = await supabase.from("canchas").select("name, addr, hours, precio, precio_min, tipo, rating, reviews_count, servicios, phone").order("rating", { ascending: false });
-    const { data: topReviews } = await supabase.from("cancha_reviews").select("rating, comment, canchas(name)").order("rating", { ascending: false }).limit(10);
+    const { data: canchas } = await supabase
+      .from("canchas")
+      .select("name, addr, hours, precio, precio_min, tipo, rating, reviews_count, servicios, benefits, social_links, phone")
+      .order("rating", { ascending: false });
 
-    const canchasContext = (canchas ?? []).map((c, i) => `${i + 1}. ${c.name} — ${c.tipo ?? "Cancha"} en ${c.addr}. Precio: ${c.precio ?? "N/D"} (desde ${c.precio_min ?? 0}). Horario: ${c.hours ?? "N/D"}. Rating: ${c.rating ?? "N/D"} (${c.reviews_count ?? 0} reseñas). Tel: ${c.phone ?? "N/D"}. Servicios: ${Array.isArray(c.servicios) ? c.servicios.join(", ") : ""}`).join("\n");
-
-    const reviewsContext = (topReviews ?? []).map((r: any) => `• ${r.canchas?.name ?? "?"} (${r.rating}★): "${r.comment}"`).join("\n");
+    const canchasContext = (canchas ?? []).map((c, i) => `${i + 1}. ${c.name} — ${c.tipo ?? "Cancha"} en ${c.addr}. Precio: ${c.precio ?? "N/D"} (desde ${c.precio_min ?? 0}). Horario: ${c.hours ?? "N/D"}. Rating general: ${c.rating ?? "N/D"} (${c.reviews_count ?? 0} reseñas registradas). Tel: ${c.phone ?? "N/D"}. Servicios: ${Array.isArray(c.servicios) ? c.servicios.join(", ") : ""}. Beneficios: ${Array.isArray(c.benefits) ? c.benefits.join(", ") : ""}`).join("\n");
 
     const langName = { es: "español", en: "English", pt: "português", de: "Deutsch" }[locale as string] ?? "español";
 
@@ -42,13 +38,12 @@ Capacidades:
 - Guiar al usuario sobre cómo reservar, registrarse o iniciar sesión.
 - Responder preguntas frecuentes.
 
+No bases tus respuestas en opiniones individuales de usuarios. Usa una vista general de las canchas, sus precios, horarios, servicios, beneficios y datos oficiales disponibles.
+
 Si el usuario no está autenticado y necesita reservar, recuérdale amablemente que puede iniciar sesión en la sección "Cuenta" para guardar su reserva, pero NO es obligatorio para hacerte preguntas.
 
 CANCHAS DISPONIBLES:
 ${canchasContext || "(sin datos)"}
-
-RESEÑAS DESTACADAS:
-${reviewsContext || "(aún sin reseñas)"}
 
 Si te preguntan algo fuera de este dominio, responde brevemente y redirige al tema de canchas.`;
 
