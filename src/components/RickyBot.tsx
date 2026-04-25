@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, Bot, User as UserIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation, Locale } from "@/lib/i18n";
+import { cleanVisibleText } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -26,7 +27,7 @@ const RickyBot = ({ text, locale }: Props) => {
   const send = async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
-    const userMsg: Msg = { role: "user", content: trimmed };
+    const userMsg: Msg = { role: "user", content: cleanVisibleText(trimmed) };
     const next = [...messages, userMsg];
     setMessages(next);
     setInput("");
@@ -66,7 +67,7 @@ const RickyBot = ({ text, locale }: Props) => {
             const p = JSON.parse(json);
             const c = p.choices?.[0]?.delta?.content;
             if (c) {
-              acc += c;
+              acc = cleanVisibleText(acc + c);
               setMessages(prev => {
                 const copy = [...prev];
                 copy[copy.length - 1] = { role: "assistant", content: acc };
@@ -121,7 +122,7 @@ const RickyBot = ({ text, locale }: Props) => {
                     {m.role === "user" ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
                   <div className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "bg-accent text-accent-foreground" : "bg-card border border-border text-foreground"}`}>
-                    {m.content || "…"}
+                    {cleanVisibleText(m.content) || "…"}
                   </div>
                 </div>
               ))}
@@ -137,7 +138,7 @@ const RickyBot = ({ text, locale }: Props) => {
               <div className="flex gap-2">
                 <input
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => setInput(cleanVisibleText(e.target.value))}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                   placeholder={text.rickyPlaceholder}
                   className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
