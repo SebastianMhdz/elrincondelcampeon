@@ -33,18 +33,14 @@ const RickyBot = ({ text, locale }: Props) => {
     setLoading(true);
 
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase.functions.invoke("ricky-chat", {
-        body: { messages: next.map(m => ({ role: m.role, content: m.content })), locale },
+      const res = await fetch(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/ricky-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ messages: next.map(m => ({ role: m.role, content: m.content })), locale }),
       });
-      if (error) throw error;
-      const res = data instanceof Response ? data : null;
-      if (!res) {
-        const content = typeof data === "string" ? data : data?.content ?? data?.message ?? "";
-        setMessages(prev => [...prev, { role: "assistant", content: content || text.rickyError }]);
-        setLoading(false);
-        return;
-      }
       if (res.status === 429) { toast({ title: text.rickyRateLimit, variant: "destructive" }); setLoading(false); return; }
       if (res.status === 402) { toast({ title: text.rickyNoCredits, variant: "destructive" }); setLoading(false); return; }
       if (!res.ok || !res.body) throw new Error("stream failed");
