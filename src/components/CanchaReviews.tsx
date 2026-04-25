@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
 import { getProfilesMap, displayNameOf } from "@/lib/profile";
+import { cleanVisibleText } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 
 interface Review {
@@ -49,9 +50,10 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
 
   const submit = async () => {
     if (!user) { toast({ title: text.loginRequired, description: text.loginToReview, variant: "destructive" }); return; }
-    if (!comment.trim()) { toast({ title: text.errorTitle, description: text.reviewCommentRequired, variant: "destructive" }); return; }
+    const safeComment = cleanVisibleText(comment);
+    if (!safeComment) { toast({ title: text.errorTitle, description: text.reviewCommentRequired, variant: "destructive" }); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: comment.trim() });
+    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: safeComment });
     setSubmitting(false);
     if (error) { toast({ title: text.errorTitle, description: error.message, variant: "destructive" }); return; }
     setComment(""); setRating(5);
@@ -78,7 +80,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
               </button>
             ))}
           </div>
-          <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={text.reviewPlaceholder} className="w-full rounded-md border border-border bg-background p-2 text-sm text-foreground outline-none focus:border-primary" rows={2} maxLength={500} />
+          <textarea value={comment} onChange={(e) => setComment(cleanVisibleText(e.target.value))} placeholder={text.reviewPlaceholder} className="w-full rounded-md border border-border bg-background p-2 text-sm text-foreground outline-none focus:border-primary" rows={2} maxLength={500} />
           <button onClick={submit} disabled={submitting} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">{submitting ? "…" : text.submitReview}</button>
         </div>
       ) : (
@@ -108,7 +110,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
                   )}
                 </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{r.comment}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{cleanVisibleText(r.comment)}</p>
             </li>
           ))}
         </ul>
