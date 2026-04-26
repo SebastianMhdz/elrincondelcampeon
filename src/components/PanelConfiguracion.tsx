@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Settings2, Shield, Palette, Languages, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAdminLogs, requestAdminUnlock, type AdminLog } from "@/lib/admin";
-import AdminReportsLog from "@/components/AdminReportsLog";
-import type { BrandingSettings } from "@/lib/site-settings";
+import { fetchAdminLogs, requestAdminUnlock, type AdminLog } from "@/lib/administrador";
+import AdminReportsLog from "@/components/RegistroReportesAdmin";
+import type { BrandingSettings } from "@/lib/configuracion-sitio";
 import type { Json } from "@/integrations/supabase/types";
 import type { Locale, Translation } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import CanchaAdminPanel from "@/components/CanchaAdminPanel";
+import CanchaAdminPanel from "@/components/PanelAdminCanchas";
 
 interface SettingsPanelProps {
   locale: Locale;

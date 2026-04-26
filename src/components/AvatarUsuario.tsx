@@ -1,4 +1,4 @@
-import { resolveAvatar, initialsFromName } from "@/lib/avatars";
+import { resolveAvatar, initialsFromName } from "@/lib/avatares";
 import { cn } from "@/lib/utils";
 
 interface Props {

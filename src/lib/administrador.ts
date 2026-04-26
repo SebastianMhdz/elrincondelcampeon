@@ -17,7 +17,7 @@ export const fetchAdminLogs = async (): Promise<AdminLog[]> => {
 };
 
 export const requestAdminUnlock = async (adminName: string, accessCode: string) => {
-  const { data, error } = await supabase.functions.invoke("admin-access", {
+  const { data, error } = await supabase.functions.invoke("acceso-admin", {
     body: { adminName, accessCode },
   });
   if (error) return { ok: false, error: error.message };

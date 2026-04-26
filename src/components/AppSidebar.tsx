@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { CalendarCheck2, ChevronRight, Headphones, LayoutGrid, MapPinned, Route, ClipboardList, UserCircle, Home, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tab } from "@/components/NavTabs";
-import SettingsPanel from "@/components/SettingsPanel";
+import SettingsPanel from "@/components/PanelConfiguracion";
 import type { Locale, Translation } from "@/lib/i18n";
-import type { BrandingSettings } from "@/lib/site-settings";
+import type { BrandingSettings } from "@/lib/configuracion-sitio";
 import logoImage from "@/assets/logo-rincon.png";
 
 interface AppSidebarProps {

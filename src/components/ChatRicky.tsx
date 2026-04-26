@@ -34,7 +34,7 @@ const RickyBot = ({ text, locale }: Props) => {
     setLoading(true);
 
     try {
-      const res = await fetch(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/ricky-chat`, {
+      const res = await fetch(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/chat-ricky`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
