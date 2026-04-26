@@ -13,6 +13,7 @@ interface Report {
   subject: string;
   message: string;
   status: string;
+  admin_notes: string | null;
   category: string | null;
   created_at: string;
   _profileName?: string;
@@ -42,6 +43,11 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
     load();
   };
 
+  const updateReply = async (id: string, admin_notes: string) => {
+    await supabase.from("support_reports").update({ admin_notes: admin_notes.trim() || null, status: admin_notes.trim() ? "resolved" : "in_progress" }).eq("id", id);
+    load();
+  };
+
   return (
     <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Inbox className="h-4 w-4 text-primary" /> {text.supportReportsLog}</div>
@@ -67,6 +73,10 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
                 </select>
               </div>
               <p className="text-muted-foreground line-clamp-3">{r.message}</p>
+              <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-2">
+                <label className="text-[10px] font-semibold text-muted-foreground">{text.replyToUser}</label>
+                <textarea defaultValue={r.admin_notes ?? ""} onBlur={(e) => updateReply(r.id, e.target.value)} className="min-h-[64px] w-full rounded border border-border bg-background p-2 text-xs text-foreground outline-none focus:border-primary" placeholder={text.teamReply} />
+              </div>
               <p className="mt-1 text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
             </li>
           ))}

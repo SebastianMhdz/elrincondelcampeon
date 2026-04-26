@@ -27,7 +27,7 @@ const RickyBot = ({ text, locale }: Props) => {
   const send = async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
-    const userMsg: Msg = { role: "user", content: cleanVisibleText(trimmed) };
+    const userMsg: Msg = { role: "user", content: cleanVisibleText(trimmed, true) };
     const next = [...messages, userMsg];
     setMessages(next);
     setInput("");
@@ -122,7 +122,7 @@ const RickyBot = ({ text, locale }: Props) => {
                     {m.role === "user" ? <UserIcon className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
                   <div className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "bg-accent text-accent-foreground" : "bg-card border border-border text-foreground"}`}>
-                    {cleanVisibleText(m.content) || "…"}
+                    {cleanVisibleText(m.content, true) || "…"}
                   </div>
                 </div>
               ))}

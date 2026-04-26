@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { canchas } from "@/data/canchas";
-import { Phone, MessageCircle, Send, CheckCircle2 } from "lucide-react";
+import { Phone, MessageCircle, Send, CheckCircle2, Inbox } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation } from "@/lib/i18n";
 import { cleanVisibleText } from "@/lib/utils";
@@ -15,6 +15,16 @@ const SoporteSection = ({ text }: { text: Translation }) => {
   const [sent, setSent] = useState(false);
   const [telCancha, setTelCancha] = useState("");
   const [waCancha, setWaCancha] = useState("");
+  const [requests, setRequests] = useState<Array<{ id: string; subject: string; message: string; status: string; admin_notes: string | null; created_at: string }>>([]);
+
+  const loadRequests = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setRequests([]); return; }
+    const { data } = await supabase.from("support_reports").select("id, subject, message, status, admin_notes, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10);
+    setRequests((data as typeof requests) ?? []);
+  };
+
+  useEffect(() => { loadRequests(); }, []);
 
   const llamar = () => {
     if (!telCancha) { toast({ title: text.selectCourtShort, variant: "destructive" }); return; }
@@ -26,21 +36,23 @@ const SoporteSection = ({ text }: { text: Translation }) => {
     window.open(`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola! Info sobre ${c.name}.`)}`, "_blank");
   };
   const enviar = async () => {
-    const safeName = cleanVisibleText(nombre);
-    const safeMessage = cleanVisibleText(mensaje);
-    const safeSubject = cleanVisibleText(asunto);
+    const safeName = cleanVisibleText(nombre, true);
+    const safeMessage = cleanVisibleText(mensaje, true);
+    const safeSubject = cleanVisibleText(asunto, true);
     if (!safeName || !safeMessage) { toast({ title: text.completeNameMessage, variant: "destructive" }); return; }
     const { data: { user } } = await supabase.auth.getUser();
+    const safeEmail = contacto.includes("@") ? contacto.trim() : user?.email ?? "usuario@sin-correo.local";
     const { error } = await supabase.from("support_reports").insert({
       user_id: user?.id ?? null,
       name: safeName,
-      email: contacto || (user?.email ?? "no-email"),
+      email: safeEmail,
       subject: safeSubject,
       message: safeMessage,
       category: "general",
     });
     if (error) { toast({ title: text.errorTitle, description: error.message, variant: "destructive" }); return; }
     setSent(true);
+    loadRequests();
   };
 
   const inputClass = "w-full rounded-lg border border-border bg-card p-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -99,6 +111,26 @@ const SoporteSection = ({ text }: { text: Translation }) => {
           </button>
         </div>
       )}
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"><Inbox className="h-4 w-4 text-primary" /> {text.mySupportRequests}</h3>
+        {requests.length === 0 ? <p className="text-xs italic text-muted-foreground">{text.noReportsYet}</p> : (
+          <ul className="space-y-3">
+            {requests.map((request) => (
+              <li key={request.id} className="rounded-lg border border-border bg-background/50 p-3 text-sm">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div className="min-w-0"><p className="truncate font-semibold text-foreground">{request.subject}</p><p className="text-[10px] text-muted-foreground">{new Date(request.created_at).toLocaleString()}</p></div>
+                  <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[10px] font-semibold text-muted-foreground">{request.status}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{request.message}</p>
+                <div className="mt-3 rounded-lg border border-border bg-card p-3">
+                  <p className="mb-1 text-xs font-semibold text-foreground">{text.teamReply}</p>
+                  <p className="text-xs text-muted-foreground">{request.admin_notes || text.noTeamReplyYet}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

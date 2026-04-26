@@ -40,9 +40,9 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
   }, [open, user.id, user.user_metadata]);
 
   const handleSave = async () => {
-    const safeName = cleanVisibleText(customName);
-    const safeCountry = cleanVisibleText(country);
-    const safeBio = cleanVisibleText(bio);
+    const safeName = cleanVisibleText(customName, true);
+    const safeCountry = cleanVisibleText(country, true);
+    const safeBio = cleanVisibleText(bio, true);
 
     if (safeName.length > 60) {
       toast({ title: "Nombre muy largo", description: "Máximo 60 caracteres", variant: "destructive" });

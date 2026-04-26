@@ -116,6 +116,8 @@ export type Translation = {
   updateRouteFromMyLocation: string;
   routeShownInline: string;
   selectCourtToSeeLocation: string;
+  nearestCourt: string;
+  findNearestCourt: string;
 
   // Rutas section
   transportRoutes: string;
@@ -188,6 +190,11 @@ export type Translation = {
   messageSent: string;
   willReplySoon: string;
   completeNameMessage: string;
+  mySupportRequests: string;
+  teamReply: string;
+  noTeamReplyYet: string;
+  replyToUser: string;
+  saveReply: string;
 
   // Mis reservas
   myReservationsTitle: string;
@@ -350,6 +357,8 @@ export const translations: Record<Locale, Translation> = {
     updateRouteFromMyLocation: "Actualizar ruta desde mi ubicación",
     routeShownInline: "El trayecto se muestra dentro de esta página sin sacarte de la experiencia.",
     selectCourtToSeeLocation: "Selecciona una cancha para ver su ubicación",
+    nearestCourt: "Cancha más cercana",
+    findNearestCourt: "Buscar cancha más cercana",
     transportRoutes: "Rutas de transporte",
     urban: "Urbano",
     trunk: "Troncal",
@@ -416,6 +425,11 @@ export const translations: Record<Locale, Translation> = {
     messageSent: "Mensaje enviado",
     willReplySoon: "Te responderemos a la brevedad.",
     completeNameMessage: "Completa nombre y mensaje",
+    mySupportRequests: "Mis solicitudes de soporte",
+    teamReply: "Respuesta del equipo",
+    noTeamReplyYet: "Aún no hay respuesta del equipo.",
+    replyToUser: "Responder al usuario",
+    saveReply: "Guardar respuesta",
     myReservationsTitle: "Mis reservas",
     myReservationsDesc: "Aquí ves todas las reservas que has hecho con tu cuenta.",
     noReservationsYet: "Aún no tienes reservas. Ve a Reservar para crear una.",
@@ -502,6 +516,8 @@ export const translations: Record<Locale, Translation> = {
     showRouteFromMyLocation: "Show route from my location", updateRouteFromMyLocation: "Update route from my location",
     routeShownInline: "The route is shown inside this page so you stay in the experience.",
     selectCourtToSeeLocation: "Select a court to see its location",
+    nearestCourt: "Nearest court",
+    findNearestCourt: "Find nearest court",
     transportRoutes: "Transport routes", urban: "Urban", trunk: "Trunk", rideshare: "Uber/InDriver",
     planWithApps: "Plan with apps", openMoovit: "Open Moovit", openGoogleMaps: "Google Maps (public transport)",
     bookYourCourtTitle: "Book your court",
@@ -526,6 +542,7 @@ export const translations: Record<Locale, Translation> = {
     requestInfo: "Request information", other: "Other", contactInfo: "Cellphone / Email", message: "Message",
     describeQuery: "Describe your inquiry...", sendMessage: "Send message", messageSent: "Message sent",
     willReplySoon: "We'll reply soon.", completeNameMessage: "Complete name and message",
+    mySupportRequests: "My support requests", teamReply: "Team reply", noTeamReplyYet: "No team reply yet.", replyToUser: "Reply to user", saveReply: "Save reply",
     myReservationsTitle: "My bookings", myReservationsDesc: "All bookings made with your account.",
     noReservationsYet: "No bookings yet. Go to Book to create one.",
     reservationOf: "Booking of", status: "Status", confirmed: "Confirmed", pending: "Pending", cancelled: "Cancelled",
@@ -600,6 +617,8 @@ export const translations: Record<Locale, Translation> = {
     showRouteFromMyLocation: "Mostrar rota da minha localização", updateRouteFromMyLocation: "Atualizar rota da minha localização",
     routeShownInline: "O trajeto aparece dentro desta página sem te tirar da experiência.",
     selectCourtToSeeLocation: "Selecione um campo para ver sua localização",
+    nearestCourt: "Campo mais próximo",
+    findNearestCourt: "Buscar campo mais próximo",
     transportRoutes: "Rotas de transporte", urban: "Urbano", trunk: "Troncal", rideshare: "Uber/InDriver",
     planWithApps: "Planejar com apps", openMoovit: "Abrir Moovit", openGoogleMaps: "Google Maps (transporte público)",
     bookYourCourtTitle: "Reservar seu campo",
@@ -624,6 +643,7 @@ export const translations: Record<Locale, Translation> = {
     requestInfo: "Solicitar informação", other: "Outro", contactInfo: "Celular / Email", message: "Mensagem",
     describeQuery: "Descreva sua consulta...", sendMessage: "Enviar mensagem", messageSent: "Mensagem enviada",
     willReplySoon: "Responderemos em breve.", completeNameMessage: "Complete nome e mensagem",
+    mySupportRequests: "Minhas solicitações de suporte", teamReply: "Resposta da equipe", noTeamReplyYet: "Ainda não há resposta da equipe.", replyToUser: "Responder ao usuário", saveReply: "Salvar resposta",
     myReservationsTitle: "Minhas reservas", myReservationsDesc: "Todas as reservas feitas com sua conta.",
     noReservationsYet: "Sem reservas ainda. Vá em Reservar para criar uma.",
     reservationOf: "Reserva de", status: "Status", confirmed: "Confirmada", pending: "Pendente", cancelled: "Cancelada",
@@ -698,6 +718,8 @@ export const translations: Record<Locale, Translation> = {
     showRouteFromMyLocation: "Route von meinem Standort", updateRouteFromMyLocation: "Route aktualisieren",
     routeShownInline: "Die Route wird in dieser Seite angezeigt.",
     selectCourtToSeeLocation: "Platz wählen, um Standort zu sehen",
+    nearestCourt: "Nächster Platz",
+    findNearestCourt: "Nächsten Platz suchen",
     transportRoutes: "Verkehrsrouten", urban: "Stadt", trunk: "Hauptlinie", rideshare: "Uber/InDriver",
     planWithApps: "Mit Apps planen", openMoovit: "Moovit öffnen", openGoogleMaps: "Google Maps (Nahverkehr)",
     bookYourCourtTitle: "Platz buchen",
@@ -722,6 +744,7 @@ export const translations: Record<Locale, Translation> = {
     requestInfo: "Information anfordern", other: "Anderes", contactInfo: "Handy / E-Mail", message: "Nachricht",
     describeQuery: "Beschreibe deine Anfrage...", sendMessage: "Nachricht senden", messageSent: "Nachricht gesendet",
     willReplySoon: "Wir antworten bald.", completeNameMessage: "Name und Nachricht ausfüllen",
+    mySupportRequests: "Meine Support-Anfragen", teamReply: "Antwort des Teams", noTeamReplyYet: "Noch keine Antwort des Teams.", replyToUser: "Dem Nutzer antworten", saveReply: "Antwort speichern",
     myReservationsTitle: "Meine Buchungen", myReservationsDesc: "Alle Buchungen mit deinem Konto.",
     noReservationsYet: "Noch keine Buchungen. Geh zu Buchen, um eine zu erstellen.",
     reservationOf: "Buchung von", status: "Status", confirmed: "Bestätigt", pending: "Ausstehend", cancelled: "Storniert",

@@ -7,6 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 const DISCOURAGED_SPECIAL_CHARS = /[!"#$%&/()=]/g;
 
-export function cleanVisibleText(value: string) {
-  return value.replace(DISCOURAGED_SPECIAL_CHARS, "").replace(/\s{2,}/g, " ").trim();
+export function cleanVisibleText(value: string, trim = false) {
+  const cleaned = value.replace(DISCOURAGED_SPECIAL_CHARS, "").replace(/[ \t]{2,}/g, " ");
+  return trim ? cleaned.trim() : cleaned;
 }

@@ -155,4 +155,13 @@
     border: 1px solid hsl(var(--border));
     box-shadow: 0 26px 70px -42px hsl(var(--foreground) / 0.25);
   }
+
+  .sidebar-scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .sidebar-scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
 }
