@@ -116,6 +116,8 @@ export type Translation = {
   updateRouteFromMyLocation: string;
   routeShownInline: string;
   selectCourtToSeeLocation: string;
+  nearestCourt: string;
+  findNearestCourt: string;
 
   // Rutas section
   transportRoutes: string;
@@ -188,6 +190,11 @@ export type Translation = {
   messageSent: string;
   willReplySoon: string;
   completeNameMessage: string;
+  mySupportRequests: string;
+  teamReply: string;
+  noTeamReplyYet: string;
+  replyToUser: string;
+  saveReply: string;
 
   // Mis reservas
   myReservationsTitle: string;
