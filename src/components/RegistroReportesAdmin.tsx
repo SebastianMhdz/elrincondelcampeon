@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Translation } from "@/lib/i18n";
-import { getProfilesMap, displayNameOf } from "@/lib/profile";
-import UserAvatar from "./UserAvatar";
+import { getProfilesMap, displayNameOf } from "@/lib/perfil";
+import UserAvatar from "./AvatarUsuario";
 
 interface Report {
   id: string;

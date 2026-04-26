@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { canchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import { MapPin, Navigation, Crosshair, LocateFixed } from "lucide-react";
-import MapRoutePanel from "@/components/MapRoutePanel";
+import MapRoutePanel from "@/components/PanelRutaMapa";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation } from "@/lib/i18n";
 

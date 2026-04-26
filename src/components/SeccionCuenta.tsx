@@ -4,9 +4,9 @@ import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin } from "lucide-react";
 import type { Translation } from "@/lib/i18n";
-import ProfileEditor from "@/components/ProfileEditor";
-import UserAvatar from "@/components/UserAvatar";
-import { displayNameOf, getProfile, type UserProfile } from "@/lib/profile";
+import ProfileEditor from "@/components/EditorPerfil";
+import UserAvatar from "@/components/AvatarUsuario";
+import { displayNameOf, getProfile, type UserProfile } from "@/lib/perfil";
 
 interface Props {
   text: Translation;

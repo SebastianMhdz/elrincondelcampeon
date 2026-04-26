@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
-import { getProfilesMap, displayNameOf } from "@/lib/profile";
+import { getProfilesMap, displayNameOf } from "@/lib/perfil";
 import { cleanVisibleText } from "@/lib/utils";
-import UserAvatar from "./UserAvatar";
+import UserAvatar from "./AvatarUsuario";
 
 interface Review {
   id: string;

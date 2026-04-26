@@ -4,9 +4,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, UserCog, UserCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getProfile, type UserProfile } from "@/lib/profile";
-import UserAvatar from "./UserAvatar";
-import ProfileEditor from "./ProfileEditor";
+import { getProfile, type UserProfile } from "@/lib/perfil";
+import UserAvatar from "./AvatarUsuario";
+import ProfileEditor from "./EditorPerfil";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {

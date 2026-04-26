@@ -3,7 +3,7 @@ import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import CanchaCard from "./CanchaCard";
 import CanchaDetail from "./CanchaDetail";
-import { getCanchas } from "@/lib/canchas-db";
+import { getCanchas } from "@/lib/canchas-bd";
 import type { Translation } from "@/lib/i18n";
 import type { User } from "@supabase/supabase-js";
 

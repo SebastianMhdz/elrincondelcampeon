@@ -2,7 +2,7 @@ import { Phone, MapPin, Users, Trophy, Mail, Instagram, Facebook, Github } from 
 import logoImage from "@/assets/logo-rincon.png";
 import type { Translation } from "@/lib/i18n";
 import type { Tab } from "@/components/NavTabs";
-import type { BrandingSettings } from "@/lib/site-settings";
+import type { BrandingSettings } from "@/lib/configuracion-sitio";
 
 interface FooterProps {
   branding: BrandingSettings;

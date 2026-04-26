@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Trophy, Plus, Calendar, Users, Award, ArrowRight } from "lucide-react";
-import { listTournaments, listSignups, type Tournament } from "@/lib/tournaments";
-import { getCanchas } from "@/lib/canchas-db";
+import { listTournaments, listSignups, type Tournament } from "@/lib/torneos";
+import { getCanchas } from "@/lib/canchas-bd";
 import type { Cancha } from "@/data/canchas";
-import TournamentForm from "./TournamentForm";
+import TournamentForm from "./FormularioTorneo";
 import { Button } from "@/components/ui/button";
 
 interface Props {

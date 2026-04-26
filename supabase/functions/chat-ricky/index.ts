@@ -67,7 +67,7 @@ Si te preguntan algo fuera de este dominio, responde brevemente y redirige al te
 
     return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
-    console.error("ricky-chat error", e);
+    console.error("chat-ricky error", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

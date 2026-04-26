@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { Star, Trophy, MapPin, ArrowRight, Sparkles, CalendarRange, TrendingUp } from "lucide-react";
 import type { Cancha } from "@/data/canchas";
 import type { Translation } from "@/lib/i18n";
-import { getCanchas } from "@/lib/canchas-db";
-import { listTournaments, type Tournament } from "@/lib/tournaments";
+import { getCanchas } from "@/lib/canchas-bd";
+import { listTournaments, type Tournament } from "@/lib/torneos";
 import type { Tab } from "@/components/NavTabs";
 
 interface Props {

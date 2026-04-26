@@ -7,9 +7,9 @@ import {
   getTournament, listSignups, listAnnouncements, createSignup, deleteSignup,
   createAnnouncement, deleteAnnouncement, updateTournament, deleteTournament,
   type Tournament, type TournamentSignup, type TournamentAnnouncement,
-} from "@/lib/tournaments";
-import { getProfilesMap, displayNameOf } from "@/lib/profile";
-import UserAvatar from "./UserAvatar";
+} from "@/lib/torneos";
+import { getProfilesMap, displayNameOf } from "@/lib/perfil";
+import UserAvatar from "./AvatarUsuario";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
