@@ -46,7 +46,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
       )}
     >
       <div className="border-b border-white/10 p-4">
-        <button onClick={() => onChange("inicio")} className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left backdrop-blur-sm transition hover:bg-white/10">
+        <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl bg-white/5 text-left backdrop-blur-sm transition hover:bg-white/10", expanded ? "gap-3 p-3" : "justify-center p-2")}>
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
             <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain p-0.5" />
           </div>
@@ -59,7 +59,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
         </button>
       </div>
 
-      <div className="flex-1 space-y-1.5 overflow-y-auto p-3">
+      <div className="sidebar-scrollbar-hidden flex-1 space-y-1.5 overflow-y-auto p-3">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.id;
@@ -68,7 +68,8 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
               key={item.id}
               onClick={() => onChange(item.id)}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200",
+                "group flex w-full items-center rounded-xl border p-3 text-left transition-all duration-200",
+                expanded ? "gap-3" : "justify-center",
                 isActive
                   ? "border-primary/40 bg-primary text-primary-foreground shadow-[0_14px_34px_-20px_hsl(var(--primary)/0.65)]"
                   : "border-transparent bg-white/5 hover:border-white/10 hover:bg-white/10"
