@@ -50,7 +50,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
 
   const submit = async () => {
     if (!user) { toast({ title: text.loginRequired, description: text.loginToReview, variant: "destructive" }); return; }
-    const safeComment = cleanVisibleText(comment);
+    const safeComment = cleanVisibleText(comment, true);
     if (!safeComment) { toast({ title: text.errorTitle, description: text.reviewCommentRequired, variant: "destructive" }); return; }
     setSubmitting(true);
     const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: safeComment });
@@ -110,7 +110,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
                   )}
                 </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{cleanVisibleText(r.comment)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{cleanVisibleText(r.comment, true)}</p>
             </li>
           ))}
         </ul>
