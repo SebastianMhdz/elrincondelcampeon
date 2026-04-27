@@ -65,6 +65,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
     setAdmin(true);
     localStorage.setItem("admin-active", "1");
     localStorage.setItem("admin-name", adminName.trim());
+    sessionStorage.setItem("admin-access-code", accessCode);
     setAccessCode("");
     toast({ title: text.unlockAdmin, description: `${text.loggedInAs}: ${result.name}` });
     fetchAdminLogs().then(setLogs);
@@ -73,6 +74,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
   const lockAdmin = () => {
     setAdmin(false);
     localStorage.removeItem("admin-active");
+    sessionStorage.removeItem("admin-access-code");
   };
 
   const saveBranding = async () => {
