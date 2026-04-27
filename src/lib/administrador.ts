@@ -24,3 +24,14 @@ export const requestAdminUnlock = async (adminName: string, accessCode: string) 
   if (!data?.success) return { ok: false, error: data?.error ?? "Acceso denegado" };
   return { ok: true, name: data.name as string };
 };
+
+export const ejecutarOperacionAdmin = async (action: string, payload: Record<string, unknown>) => {
+  const adminName = localStorage.getItem("admin-name") ?? "";
+  const accessCode = sessionStorage.getItem("admin-access-code") ?? "";
+  const { data, error } = await supabase.functions.invoke("operaciones-admin", {
+    body: { action, adminName, accessCode, ...payload },
+  });
+  if (error) return { ok: false, error: error.message };
+  if (!data?.success) return { ok: false, error: data?.error ?? "Operación denegada" };
+  return { ok: true };
+};
