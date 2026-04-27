@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import CanchaAdminPanel from "@/components/PanelAdminCanchas";
+import PanelBasesDatosAdmin from "@/components/PanelBasesDatosAdmin";
 
 interface SettingsPanelProps {
   locale: Locale;
@@ -162,6 +163,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
                 <div className="space-y-2"><Label>{text.footerAuthors}</Label><Input value={form.authors.join(", ")} onChange={(e) => setForm({ ...form, authors: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} /></div>
                 <Button onClick={saveBranding} disabled={savingBranding} className="bg-primary text-primary-foreground">{savingBranding ? "..." : text.saveChanges}</Button>
                 <CanchaAdminPanel />
+                <PanelBasesDatosAdmin />
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">{text.adminOnlyMessage}</div>
