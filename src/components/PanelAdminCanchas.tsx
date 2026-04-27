@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { subscribeToCanchasChanges } from "@/lib/canchas-bd";
 
 interface CourtRow {
   id: string;
@@ -26,6 +27,7 @@ interface CourtRow {
 
 const lines = (value: unknown) => Array.isArray(value) ? value.filter((x) => typeof x === "string").join("\n") : "";
 const parseLines = (value: string) => value.split("\n").map((x) => x.trim()).filter(Boolean);
+const listValue = (value: unknown) => typeof value === "string" ? parseLines(value) : Array.isArray(value) ? value.filter((x): x is string => typeof x === "string") : [];
 const social = (value: unknown) => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, string> : {};
 
 const CanchaAdminPanel = () => {
@@ -46,7 +48,10 @@ const CanchaAdminPanel = () => {
     if (rows.length && !selectedId) { setSelectedId(rows[0].id); setForm(rows[0]); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    return subscribeToCanchasChanges(load);
+  }, []);
 
   const select = (id: string) => {
     setSelectedId(id);
@@ -63,12 +68,12 @@ const CanchaAdminPanel = () => {
       phone: form.phone,
       hours: form.hours,
       precio: form.precio,
-      precio_min: form.precio_min,
+      precio_min: Number.isFinite(Number(form.precio_min)) ? Number(form.precio_min) : null,
       tipo: form.tipo,
       image_url: form.image_url,
-      servicios: parseLines(String(form.servicios ?? "")),
-      benefits: parseLines(String(form.benefits ?? "")),
-      gallery_urls: parseLines(String(form.gallery_urls ?? "")),
+      servicios: listValue(form.servicios),
+      benefits: listValue(form.benefits),
+      gallery_urls: listValue(form.gallery_urls),
       social_links: {
         instagram: socials.instagram || undefined,
         facebook: socials.facebook || undefined,

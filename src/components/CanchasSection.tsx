@@ -3,7 +3,7 @@ import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import CanchaCard from "./CanchaCard";
 import CanchaDetail from "./CanchaDetail";
-import { getCanchas } from "@/lib/canchas-bd";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 import type { Translation } from "@/lib/i18n";
 import type { User } from "@supabase/supabase-js";
 
@@ -19,7 +19,17 @@ const CanchasSection = ({ onMapSelect, onReserveSelect, text, user, onGoAccount 
   const [selected, setSelected] = useState<Cancha | null>(null);
   const [items, setItems] = useState<Cancha[]>(fallbackCanchas);
 
-  useEffect(() => { getCanchas().then(setItems); }, []);
+  useEffect(() => {
+    let active = true;
+    const load = () => getCanchas().then((rows) => {
+      if (!active) return;
+      setItems(rows);
+      setSelected((current) => current ? rows.find((item) => item.id === current.id) ?? current : null);
+    });
+    load();
+    const unsubscribe = subscribeToCanchasChanges(load);
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   if (selected) {
     return <CanchaDetail cancha={selected} onBack={() => setSelected(null)} onMap={onMapSelect} onReserve={onReserveSelect} text={text} user={user} onGoAccount={onGoAccount} />;

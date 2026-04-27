@@ -1,16 +1,25 @@
 import { useState, useEffect } from "react";
-import { canchas } from "@/data/canchas";
+import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import { Bus, Train, Car, Clock, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Translation } from "@/lib/i18n";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 
 interface Props { initialCancha?: Cancha | null; text: Translation; }
 
 const RutasSection = ({ initialCancha, text }: Props) => {
   const [selectedId, setSelectedId] = useState<number | "">(initialCancha?.id ?? "");
+  const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const selected = selectedId !== "" ? canchas.find((c) => c.id === selectedId) : null;
   useEffect(() => { if (initialCancha) setSelectedId(initialCancha.id); }, [initialCancha]);
+  useEffect(() => {
+    let active = true;
+    const load = () => getCanchas().then((rows) => { if (active) setCanchas(rows); });
+    load();
+    const unsubscribe = subscribeToCanchasChanges(load);
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   const cfg = {
     urbano: { icon: <Bus className="h-4 w-4" />, label: text.urban, className: "bg-transit-light text-transit" },

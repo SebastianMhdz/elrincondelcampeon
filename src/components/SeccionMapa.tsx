@@ -1,21 +1,30 @@
 import { useState, useEffect, useMemo } from "react";
-import { canchas } from "@/data/canchas";
+import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import { MapPin, Navigation, Crosshair, LocateFixed } from "lucide-react";
 import MapRoutePanel from "@/components/PanelRutaMapa";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation } from "@/lib/i18n";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 
 interface Props { initialCancha?: Cancha | null; text: Translation; }
 
 const MapSection = ({ initialCancha, text }: Props) => {
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<number | "">(initialCancha?.id ?? "");
+  const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const selected = selectedId !== "" ? canchas.find((c) => c.id === selectedId) : null;
 
   useEffect(() => { if (initialCancha) setSelectedId(initialCancha.id); }, [initialCancha]);
+  useEffect(() => {
+    let active = true;
+    const load = () => getCanchas().then((rows) => { if (active) setCanchas(rows); });
+    load();
+    const unsubscribe = subscribeToCanchasChanges(load);
+    return () => { active = false; unsubscribe(); };
+  }, []);
 
   const locateUser = () => {
     if (!navigator.geolocation) { toast({ title: text.errorTitle, description: "geolocation", variant: "destructive" }); return; }
