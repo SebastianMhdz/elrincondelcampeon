@@ -3,6 +3,8 @@ import { Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Translation } from "@/lib/i18n";
 import { getProfilesMap, displayNameOf } from "@/lib/perfil";
+import { ejecutarOperacionAdmin } from "@/lib/administrador";
+import { useToast } from "@/hooks/use-toast";
 import UserAvatar from "./AvatarUsuario";
 
 interface Report {
@@ -21,7 +23,9 @@ interface Report {
 }
 
 const AdminReportsLog = ({ text }: { text: Translation }) => {
+  const { toast } = useToast();
   const [reports, setReports] = useState<Report[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -44,7 +48,14 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
   };
 
   const updateReply = async (id: string, admin_notes: string) => {
-    await supabase.from("support_reports").update({ admin_notes: admin_notes.trim() || null, status: admin_notes.trim() ? "resolved" : "in_progress" }).eq("id", id);
+    setSavingId(id);
+    const result = await ejecutarOperacionAdmin("reply_report", { id, admin_notes, status: admin_notes.trim() ? "resolved" : "in_progress" });
+    setSavingId(null);
+    if (!result.ok) {
+      toast({ title: "No se pudo responder", description: result.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Respuesta guardada", description: "El usuario verá la respuesta en soporte." });
     load();
   };
 
@@ -75,7 +86,7 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
               <p className="text-muted-foreground line-clamp-3">{r.message}</p>
               <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-2">
                 <label className="text-[10px] font-semibold text-muted-foreground">{text.replyToUser}</label>
-                <textarea defaultValue={r.admin_notes ?? ""} onBlur={(e) => updateReply(r.id, e.target.value)} className="min-h-[64px] w-full rounded border border-border bg-background p-2 text-xs text-foreground outline-none focus:border-primary" placeholder={text.teamReply} />
+                <textarea defaultValue={r.admin_notes ?? ""} onBlur={(e) => updateReply(r.id, e.target.value)} className="min-h-[64px] w-full rounded border border-border bg-background p-2 text-xs text-foreground outline-none focus:border-primary" placeholder={savingId === r.id ? "Guardando…" : text.teamReply} />
               </div>
               <p className="mt-1 text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
             </li>
