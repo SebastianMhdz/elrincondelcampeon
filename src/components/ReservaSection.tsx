@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { canchas } from "@/data/canchas";
+import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
 import { CalendarCheck, CheckCircle2, Mail, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 
 interface ReservaSectionProps {
   initialCancha?: Cancha | null;
@@ -40,13 +41,24 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [nota, setNota] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null }>>([]);
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
-    supabase.from("canchas").select("id, legacy_id, name, precio").order("legacy_id", { ascending: true }).then(({ data }) => {
+    let active = true;
+    const load = async () => {
+      const [{ data }, rows] = await Promise.all([
+        supabase.from("canchas").select("id, legacy_id, name, precio").order("legacy_id", { ascending: true }),
+        getCanchas(),
+      ]);
+      if (!active) return;
       if (data?.length) setDbCanchas(data);
-    });
+      setCanchas(rows);
+    };
+    load();
+    const unsubscribe = subscribeToCanchasChanges(load);
+    return () => { active = false; unsubscribe(); };
   }, []);
   useEffect(() => {
     if (user) {
@@ -74,7 +86,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       return;
     }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
-    const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? canchas[0];
+    const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? fallbackCanchas[0];
     setSending(true);
     if (!canchaDb) {
       toast({ title: text.errorTitle, description: "Cancha no disponible", variant: "destructive" });
