@@ -43,7 +43,12 @@ const AdminReportsLog = ({ text }: { text: Translation }) => {
   useEffect(() => { load(); }, []);
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("support_reports").update({ status }).eq("id", id);
+    const current = reports.find((report) => report.id === id);
+    const result = await ejecutarOperacionAdmin("reply_report", { id, admin_notes: current?.admin_notes ?? "", status });
+    if (!result.ok) {
+      toast({ title: "No se pudo cambiar el estado", description: result.error, variant: "destructive" });
+      return;
+    }
     load();
   };
 
