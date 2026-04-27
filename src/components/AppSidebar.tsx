@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarCheck2, ChevronRight, Headphones, LayoutGrid, MapPinned, Route, ClipboardList, UserCircle, Home, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tab } from "@/components/NavTabs";
@@ -20,8 +20,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDarkModeChange, text, branding, onBrandingChange }: AppSidebarProps) => {
-  const [hovered, setHovered] = useState(false);
-  const expanded = hovered;
+  const expanded = true;
   const items: { id: Tab; label: string; hint: string; icon: typeof LayoutGrid }[] = [
     { id: "inicio", label: "Inicio", hint: "Recepción y novedades", icon: Home },
     { id: "canchas", label: text.courts, hint: text.courtsHint, icon: LayoutGrid },
@@ -38,8 +37,6 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
 
   return (
     <aside
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       className={cn(
         "fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-sidebar-border bg-[linear-gradient(180deg,hsl(var(--sidebar-primary)),hsl(var(--sidebar-background)))] text-sidebar-foreground transition-[width] duration-300 md:flex md:flex-col",
         expanded ? "w-80" : "w-24"
