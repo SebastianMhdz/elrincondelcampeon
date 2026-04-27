@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Star, Trophy, MapPin, ArrowRight, Sparkles, CalendarRange, TrendingUp } from "lucide-react";
 import type { Cancha } from "@/data/canchas";
 import type { Translation } from "@/lib/i18n";
-import { getCanchas } from "@/lib/canchas-bd";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 import { listTournaments, type Tournament } from "@/lib/torneos";
 import type { Tab } from "@/components/NavTabs";
 
@@ -21,9 +21,13 @@ const HomeSection = ({ branding, onNavigate, onSelectCancha, onSelectTournament 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getCanchas(), listTournaments({ upcoming: true, limit: 4 })])
+    let active = true;
+    const load = () => Promise.all([getCanchas(), listTournaments({ upcoming: true, limit: 4 })])
       .then(([c, t]) => { setCanchas(c); setTournaments(t); })
       .finally(() => setLoading(false));
+    load();
+    const unsubscribe = subscribeToCanchasChanges(() => getCanchas().then((rows) => { if (active) setCanchas(rows); }));
+    return () => { active = false; unsubscribe(); };
   }, []);
 
   const topRated = [...canchas].sort((a, b) => b.rating - a.rating).slice(0, 3);
