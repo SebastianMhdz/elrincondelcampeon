@@ -115,7 +115,7 @@ const PanelBasesDatosAdmin = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {tablaActual.columnas.map((columna) => <TableHead key={columna} className="whitespace-nowrap text-xs">{columna.replaceAll("_", " ")}</TableHead>)}
+                  {tablaActual.columnas.map((columna) => <TableHead key={columna} className="whitespace-nowrap text-xs">{columna.replace(/_/g, " ")}</TableHead>)}
                 </TableRow>
               </TableHeader>
               <TableBody>
