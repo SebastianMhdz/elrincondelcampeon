@@ -61,3 +61,12 @@ export const getCanchas = async (): Promise<Cancha[]> => {
 
   return data.map((row) => mapCanchaRow(row, fallbackCanchas[row.legacy_id ?? 0]?.image));
 };
+
+export const subscribeToCanchasChanges = (onChange: () => void) => {
+  const channel = supabase
+    .channel(`canchas-cambios-${crypto.randomUUID()}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "canchas" }, onChange)
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+};
