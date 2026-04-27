@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Save, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ejecutarOperacionAdmin } from "@/lib/administrador";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,26 +63,15 @@ const CanchaAdminPanel = () => {
     if (!form) return;
     setSaving(true);
     const socials = social(form.social_links);
-    const { error } = await supabase.from("canchas").update({
-      name: form.name,
-      addr: form.addr,
-      phone: form.phone,
-      hours: form.hours,
-      precio: form.precio,
-      precio_min: Number.isFinite(Number(form.precio_min)) ? Number(form.precio_min) : null,
-      tipo: form.tipo,
-      image_url: form.image_url,
+    const result = await ejecutarOperacionAdmin("update_cancha", { cancha: {
+      ...form,
       servicios: listValue(form.servicios),
       benefits: listValue(form.benefits),
       gallery_urls: listValue(form.gallery_urls),
-      social_links: {
-        instagram: socials.instagram || undefined,
-        facebook: socials.facebook || undefined,
-        website: socials.website || undefined,
-      },
-    } as any).eq("id", form.id);
+      social_links: { instagram: socials.instagram || "", facebook: socials.facebook || "", website: socials.website || "" },
+    } });
     setSaving(false);
-    if (error) { toast({ title: "No se pudo guardar", description: error.message, variant: "destructive" }); return; }
+    if (!result.ok) { toast({ title: "No se pudo guardar", description: result.error, variant: "destructive" }); return; }
     toast({ title: "Cancha actualizada", description: "Los cambios ya están guardados." });
     load();
   };

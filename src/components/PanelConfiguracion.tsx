@@ -31,7 +31,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
   const [open, setOpen] = useState(false);
   const [adminName, setAdminName] = useState(() => localStorage.getItem("admin-name") ?? "");
   const [accessCode, setAccessCode] = useState("");
-  const [admin, setAdmin] = useState(() => localStorage.getItem("admin-active") === "1");
+  const [admin, setAdmin] = useState(() => localStorage.getItem("admin-active") === "1" && !!sessionStorage.getItem("admin-access-code"));
   const [unlocking, setUnlocking] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [form, setForm] = useState<BrandingSettings>(branding);
@@ -65,6 +65,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
     setAdmin(true);
     localStorage.setItem("admin-active", "1");
     localStorage.setItem("admin-name", adminName.trim());
+    sessionStorage.setItem("admin-access-code", accessCode);
     setAccessCode("");
     toast({ title: text.unlockAdmin, description: `${text.loggedInAs}: ${result.name}` });
     fetchAdminLogs().then(setLogs);
@@ -73,6 +74,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
   const lockAdmin = () => {
     setAdmin(false);
     localStorage.removeItem("admin-active");
+    sessionStorage.removeItem("admin-access-code");
   };
 
   const saveBranding = async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { canchas } from "@/data/canchas";
+import { canchas as canchasBase, type Cancha } from "@/data/canchas";
+import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
 import { Phone, MessageCircle, Send, CheckCircle2, Inbox } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Translation } from "@/lib/i18n";
@@ -15,6 +16,7 @@ const SoporteSection = ({ text }: { text: Translation }) => {
   const [sent, setSent] = useState(false);
   const [telCancha, setTelCancha] = useState("");
   const [waCancha, setWaCancha] = useState("");
+  const [canchas, setCanchas] = useState<Cancha[]>(canchasBase);
   const [requests, setRequests] = useState<Array<{ id: string; subject: string; message: string; status: string; admin_notes: string | null; created_at: string }>>([]);
 
   const loadRequests = async () => {
@@ -24,15 +26,27 @@ const SoporteSection = ({ text }: { text: Translation }) => {
     setRequests((data as typeof requests) ?? []);
   };
 
-  useEffect(() => { loadRequests(); }, []);
+  useEffect(() => {
+    loadRequests();
+    getCanchas().then(setCanchas);
+    const unsubscribeCanchas = subscribeToCanchasChanges(() => getCanchas().then(setCanchas));
+    const channel = supabase.channel("mis-reportes-soporte")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_reports" }, loadRequests)
+      .subscribe();
+    return () => {
+      unsubscribeCanchas();
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const llamar = () => {
     if (!telCancha) { toast({ title: text.selectCourtShort, variant: "destructive" }); return; }
-    window.open(`tel:${canchas[Number(telCancha)].phone}`);
+    window.open(`tel:${canchas.find((c) => String(c.id) === telCancha)?.phone ?? ""}`);
   };
   const abrirWA = () => {
     if (!waCancha) { toast({ title: text.selectCourtShort, variant: "destructive" }); return; }
-    const c = canchas[Number(waCancha)];
+    const c = canchas.find((cancha) => String(cancha.id) === waCancha);
+    if (!c) return;
     window.open(`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola! Info sobre ${c.name}.`)}`, "_blank");
   };
   const enviar = async () => {
@@ -68,7 +82,7 @@ const SoporteSection = ({ text }: { text: Translation }) => {
           <p className="mb-3 text-xs text-muted-foreground">{text.callAdmin}</p>
           <select value={telCancha} onChange={(e) => setTelCancha(e.target.value)} className={`${inputClass} mb-2 text-xs`}>
             <option value="">{text.selectCourtShort}</option>
-            {canchas.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {canchas.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
           </select>
           <button onClick={llamar} className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.callNow}</button>
         </div>
@@ -78,7 +92,7 @@ const SoporteSection = ({ text }: { text: Translation }) => {
           <p className="mb-3 text-xs text-muted-foreground">{text.writeBusiness}</p>
           <select value={waCancha} onChange={(e) => setWaCancha(e.target.value)} className={`${inputClass} mb-2 text-xs`}>
             <option value="">{text.selectCourtShort}</option>
-            {canchas.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {canchas.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
           </select>
           <button onClick={abrirWA} className="w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90">{text.openWhatsapp}</button>
         </div>
