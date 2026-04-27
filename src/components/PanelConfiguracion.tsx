@@ -98,13 +98,13 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
           </div>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl rounded-2xl border-border bg-background max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${admin ? "w-[min(96vw,1180px)] max-w-none" : "max-w-3xl"} max-h-[94vh] rounded-2xl border-border bg-background overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>{text.settings}</DialogTitle>
           <DialogDescription>{text.settingsHint}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 md:grid-cols-[0.9fr_1.1fr]">
+        <div className={`${admin ? "grid gap-6 lg:grid-cols-[0.72fr_1.55fr]" : "grid gap-6 md:grid-cols-[0.9fr_1.1fr]"}`}>
           <div className="space-y-5 rounded-2xl border border-border bg-card p-5">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Languages className="h-4 w-4 text-primary" /> {text.language}</div>
