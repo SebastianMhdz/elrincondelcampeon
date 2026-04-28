@@ -144,7 +144,12 @@ const PanelBasesDatosAdmin = () => {
         <TabsContent value={activa} className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">{tablaActual.descripcion}</p>
-            <Badge variant="secondary">{totales[tablaActual.key]} registros</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{totales[tablaActual.key]} registros</Badge>
+              <Button variant="outline" size="sm" onClick={() => descargarCSV(tablaActual.key)} className="h-7 gap-1 text-xs">
+                <Download className="h-3 w-3" /> .csv
+              </Button>
+            </div>
           </div>
           <div className="max-h-80 overflow-auto rounded-lg border border-border bg-card">
             <Table>
