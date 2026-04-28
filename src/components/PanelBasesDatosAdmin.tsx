@@ -78,6 +78,36 @@ const PanelBasesDatosAdmin = () => {
 
   useEffect(() => { cargarDatos(); }, []);
 
+  const descargarCSV = async (tabla: TablaAdmin) => {
+    const { data, error } = await supabase.from(tabla).select("*").limit(10000);
+    if (error || !data?.length) {
+      toast({ title: "Sin datos", description: error?.message ?? "No hay registros para exportar.", variant: error ? "destructive" : "default" });
+      return;
+    }
+    const columnas = Array.from(new Set(data.flatMap((fila) => Object.keys(fila as Record<string, unknown>))));
+    const escapar = (val: unknown) => {
+      if (val === null || val === undefined) return "";
+      const txt = typeof val === "object" ? JSON.stringify(val) : String(val);
+      return `"${txt.replace(/"/g, '""')}"`;
+    };
+    const filas = (data as Record<string, unknown>[]).map((fila) => columnas.map((c) => escapar(fila[c])).join(","));
+    const csv = [columnas.join(","), ...filas].join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${tabla}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "Exportado", description: `${tabla}.csv descargado (${data.length} registros).` });
+  };
+
+  const descargarTodo = async () => {
+    for (const t of tablas) await descargarCSV(t.key);
+  };
+
   const tablaActual = tablas.find((tabla) => tabla.key === activa) ?? tablas[0];
 
   return (
@@ -87,10 +117,15 @@ const PanelBasesDatosAdmin = () => {
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground"><Database className="h-4 w-4 text-primary" /> Control de datos</div>
           <p className="text-xs text-muted-foreground">Vista general para revisar reservas, torneos, soporte y actividad.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={cargarDatos} disabled={cargando} className="gap-2">
-          {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          Actualizar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={descargarTodo} className="gap-2">
+            <Download className="h-4 w-4" /> Exportar todo (.csv)
+          </Button>
+          <Button variant="outline" size="sm" onClick={cargarDatos} disabled={cargando} className="gap-2">
+            {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
