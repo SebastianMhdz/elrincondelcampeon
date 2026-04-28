@@ -23,9 +23,9 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
   const [hovered, setHovered] = useState(false);
   const expanded = hovered;
   const items: { id: Tab; label: string; hint: string; icon: typeof LayoutGrid }[] = [
-    { id: "inicio", label: "Inicio", hint: "Recepción y novedades", icon: Home },
+    { id: "inicio", label: text.home, hint: text.heroBadge, icon: Home },
     { id: "canchas", label: text.courts, hint: text.courtsHint, icon: LayoutGrid },
-    { id: "torneos", label: "Torneos", hint: "Eventos programados", icon: Trophy },
+    { id: "torneos", label: text.tournaments, hint: text.matchdayPanel, icon: Trophy },
     { id: "mapa", label: text.map, hint: text.mapHint, icon: MapPinned },
     { id: "rutas", label: text.routes, hint: text.routesHint, icon: Route },
     { id: "reservar", label: text.reserve, hint: text.reserveHint, icon: CalendarCheck2 },
@@ -47,7 +47,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
     >
       <div className="border-b border-white/10 p-3">
         <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl text-left transition hover:bg-white/5", expanded ? "flex-col gap-3 p-2" : "justify-center p-1")}>
-          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-white/25 to-white/5 backdrop-blur-sm shadow-inner transition-all", expanded ? "h-40 w-40 p-1" : "h-20 w-20 p-0.5")}>
+          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-white/25 to-white/5 backdrop-blur-sm shadow-inner transition-all", expanded ? "h-24 w-24 p-1" : "h-14 w-14 p-0.5")}>
             <img src={logoImage} alt={branding.siteName} className="max-h-full max-w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />
           </div>
           {expanded && (
