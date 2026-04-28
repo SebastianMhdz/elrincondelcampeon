@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CalendarCheck2, ChevronRight, Headphones, LayoutGrid, MapPinned, Route, ClipboardList, UserCircle, Home, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tab } from "@/components/NavTabs";
@@ -20,7 +20,8 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDarkModeChange, text, branding, onBrandingChange }: AppSidebarProps) => {
-  const expanded = true;
+  const [hovered, setHovered] = useState(false);
+  const expanded = hovered;
   const items: { id: Tab; label: string; hint: string; icon: typeof LayoutGrid }[] = [
     { id: "inicio", label: "Inicio", hint: "Recepción y novedades", icon: Home },
     { id: "canchas", label: text.courts, hint: text.courtsHint, icon: LayoutGrid },
@@ -37,15 +38,17 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
 
   return (
     <aside
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
         "fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-sidebar-border bg-[linear-gradient(180deg,hsl(var(--sidebar-primary)),hsl(var(--sidebar-background)))] text-sidebar-foreground transition-[width] duration-300 md:flex md:flex-col",
         expanded ? "w-80" : "w-24"
       )}
     >
       <div className="border-b border-white/10 p-4">
-        <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl bg-white/5 text-left backdrop-blur-sm transition hover:bg-white/10", expanded ? "gap-3 p-3" : "justify-center p-2")}>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-lg">
-            <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain p-0.5" />
+        <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl text-left transition hover:bg-white/10", expanded ? "gap-3 p-3" : "justify-center p-1")}>
+          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden transition-all", expanded ? "h-20 w-20" : "h-16 w-16")}>
+            <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />
           </div>
           {expanded && (
             <div className="min-w-0">
