@@ -29,6 +29,17 @@ const parseRutas = (value: unknown): Ruta[] => {
   }) as Ruta[];
 };
 
+const parseHourlyPricing = (value: unknown): { hour: string; price: string }[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+    .map((item) => ({
+      hour: typeof item.hour === "string" ? item.hour : "",
+      price: typeof item.price === "string" ? item.price : String(item.price ?? ""),
+    }))
+    .filter((item) => item.hour && item.price);
+};
+
 export const mapCanchaRow = (row: CanchaRow, fallbackImage?: string): Cancha => ({
   id: row.legacy_id ?? 0,
   name: row.name,
@@ -49,6 +60,11 @@ export const mapCanchaRow = (row: CanchaRow, fallbackImage?: string): Cancha => 
   benefits: parseStringArray((row as any).benefits),
   socialLinks: parseSocialLinks((row as any).social_links),
   galleryUrls: parseStringArray((row as any).gallery_urls),
+  peakHours: parseStringArray((row as any).peak_hours),
+  lowHours: parseStringArray((row as any).low_hours),
+  promotions: parseStringArray((row as any).promotions),
+  entryPolicies: parseStringArray((row as any).entry_policies),
+  hourlyPricing: parseHourlyPricing((row as any).hourly_pricing),
   image: row.image_url || fallbackImage || fallbackCanchas[row.legacy_id ?? 0]?.image || fallbackCanchas[0].image,
 });
 

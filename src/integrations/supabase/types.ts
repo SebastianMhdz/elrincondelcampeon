@@ -81,7 +81,9 @@ export type Database = {
           addr: string
           benefits: Json
           created_at: string
+          entry_policies: Json
           gallery_urls: Json
+          hourly_pricing: Json
           hours: string | null
           icon: string | null
           id: string
@@ -89,10 +91,13 @@ export type Database = {
           lat: number
           legacy_id: number | null
           lng: number
+          low_hours: Json
           name: string
+          peak_hours: Json
           phone: string | null
           precio: string | null
           precio_min: number | null
+          promotions: Json
           rating: number | null
           reviews: Json
           reviews_count: number | null
@@ -106,7 +111,9 @@ export type Database = {
           addr: string
           benefits?: Json
           created_at?: string
+          entry_policies?: Json
           gallery_urls?: Json
+          hourly_pricing?: Json
           hours?: string | null
           icon?: string | null
           id?: string
@@ -114,10 +121,13 @@ export type Database = {
           lat: number
           legacy_id?: number | null
           lng: number
+          low_hours?: Json
           name: string
+          peak_hours?: Json
           phone?: string | null
           precio?: string | null
           precio_min?: number | null
+          promotions?: Json
           rating?: number | null
           reviews?: Json
           reviews_count?: number | null
@@ -131,7 +141,9 @@ export type Database = {
           addr?: string
           benefits?: Json
           created_at?: string
+          entry_policies?: Json
           gallery_urls?: Json
+          hourly_pricing?: Json
           hours?: string | null
           icon?: string | null
           id?: string
@@ -139,10 +151,13 @@ export type Database = {
           lat?: number
           legacy_id?: number | null
           lng?: number
+          low_hours?: Json
           name?: string
+          peak_hours?: Json
           phone?: string | null
           precio?: string | null
           precio_min?: number | null
+          promotions?: Json
           rating?: number | null
           reviews?: Json
           reviews_count?: number | null

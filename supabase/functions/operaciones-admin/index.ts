@@ -60,6 +60,16 @@ serve(async (req) => {
     if (action === "update_cancha") {
       const cancha = body.cancha ?? {};
       const precioMin = Number(cancha.precio_min);
+      const limpiarHourly = (value: unknown) => {
+        if (!Array.isArray(value)) return [];
+        return value
+          .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+          .map((item) => ({
+            hour: typeof item.hour === "string" ? item.hour.trim() : "",
+            price: typeof item.price === "string" ? item.price.trim() : String(item.price ?? "").trim(),
+          }))
+          .filter((item) => item.hour && item.price);
+      };
       const { error } = await supabase
         .from("canchas")
         .update({
@@ -75,6 +85,11 @@ serve(async (req) => {
           benefits: limpiarLista(cancha.benefits),
           gallery_urls: limpiarLista(cancha.gallery_urls),
           social_links: limpiarSociales(cancha.social_links),
+          peak_hours: limpiarLista(cancha.peak_hours),
+          low_hours: limpiarLista(cancha.low_hours),
+          promotions: limpiarLista(cancha.promotions),
+          entry_policies: limpiarLista(cancha.entry_policies),
+          hourly_pricing: limpiarHourly(cancha.hourly_pricing),
           updated_at: new Date().toISOString(),
         })
         .eq("id", cancha.id);

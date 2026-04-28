@@ -36,6 +36,11 @@ export interface Cancha {
   benefits?: string[];
   socialLinks?: { instagram?: string; facebook?: string; website?: string };
   galleryUrls?: string[];
+  peakHours?: string[];
+  lowHours?: string[];
+  promotions?: string[];
+  entryPolicies?: string[];
+  hourlyPricing?: { hour: string; price: string }[];
 }
 
 export const canchas: Cancha[] = [
