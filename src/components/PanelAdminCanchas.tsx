@@ -24,7 +24,26 @@ interface CourtRow {
   benefits?: unknown;
   social_links?: unknown;
   gallery_urls?: unknown;
+  peak_hours?: unknown;
+  low_hours?: unknown;
+  promotions?: unknown;
+  entry_policies?: unknown;
+  hourly_pricing?: unknown;
 }
+
+const linesHourly = (value: unknown) => {
+  if (!Array.isArray(value)) return "";
+  return value
+    .filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
+    .map((x) => `${x.hour ?? ""}|${x.price ?? ""}`)
+    .join("\n");
+};
+const parseHourlyLines = (value: string) => value.split("\n").map((line) => {
+  const [hour, ...rest] = line.split("|");
+  const price = rest.join("|");
+  return { hour: (hour ?? "").trim(), price: (price ?? "").trim() };
+}).filter((x) => x.hour && x.price);
+const hourlyValue = (value: unknown) => typeof value === "string" ? parseHourlyLines(value) : Array.isArray(value) ? value.filter((x): x is { hour: string; price: string } => !!x && typeof x === "object" && typeof (x as any).hour === "string" && typeof (x as any).price === "string") : [];
 
 const lines = (value: unknown) => Array.isArray(value) ? value.filter((x) => typeof x === "string").join("\n") : "";
 const parseLines = (value: string) => value.split("\n").map((x) => x.trim()).filter(Boolean);
