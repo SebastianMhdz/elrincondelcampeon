@@ -46,12 +46,12 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
       )}
     >
       <div className="border-b border-white/10 p-3">
-        <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl text-left transition hover:bg-white/5", expanded ? "flex-col gap-2 p-2" : "justify-center p-1")}>
-          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-white/25 to-white/5 backdrop-blur-sm shadow-inner transition-all", expanded ? "h-40 w-40 p-3" : "h-20 w-20 p-1.5")}>
-            <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />
+        <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl text-left transition hover:bg-white/5", expanded ? "flex-col gap-3 p-0" : "justify-center p-1")}>
+          <div className={cn("flex aspect-square w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-white/25 to-white/5 backdrop-blur-sm shadow-inner transition-all", expanded ? "p-4" : "h-20 w-20 p-1.5")}>
+            <img src={logoImage} alt={branding.siteName} className="max-h-full max-w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.35)]" />
           </div>
           {expanded && (
-            <div className="min-w-0 text-center">
+            <div className="min-w-0 px-2 pb-2 text-center">
               <p className="truncate text-base font-extrabold">{branding.siteName}</p>
               <p className="mt-1 line-clamp-2 text-xs text-white/65">{branding.tagline}</p>
             </div>
