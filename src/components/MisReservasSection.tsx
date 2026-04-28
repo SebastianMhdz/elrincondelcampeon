@@ -1,8 +1,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { ClipboardList, MapPin, Calendar, Clock, User as UserIcon } from "lucide-react";
+import { ClipboardList, MapPin, Calendar, Clock, User as UserIcon, Trash2 } from "lucide-react";
+import emailjs from "emailjs-com";
 import type { Translation } from "@/lib/i18n";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Reservation {
   id: string;
@@ -19,6 +31,8 @@ interface Reservation {
   status: string;
   cancha_name?: string;
   cancha_addr?: string;
+  cancha_phone?: string;
+  cancha_precio?: string;
 }
 
 interface Props {
@@ -30,13 +44,16 @@ interface Props {
 const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toDelete, setToDelete] = useState<Reservation | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
+  const loadReservations = () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
     supabase
       .from("reservations")
-      .select("*, canchas(name, addr)")
+      .select("*, canchas(name, addr, phone, precio)")
       .eq("user_id", user.id)
       .order("reservation_date", { ascending: false })
       .then(({ data }) => {
@@ -45,11 +62,56 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
             ...r,
             cancha_name: r.canchas?.name,
             cancha_addr: r.canchas?.addr,
+            cancha_phone: r.canchas?.phone,
+            cancha_precio: r.canchas?.precio,
           })));
         }
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const handleDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("reservations").delete().eq("id", toDelete.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setDeleting(false);
+      return;
+    }
+
+    const extrasArr = Array.isArray(toDelete.extras) ? (toDelete.extras as string[]) : [];
+    const message = `Reserva cancelada en ${toDelete.cancha_name ?? ""}\nFecha: ${toDelete.reservation_date} ${toDelete.start_time}\nDuración: ${toDelete.duration_hours}h`;
+    try {
+      await emailjs.send("service_nf4p2rr", "template_211lfj5", {
+        to_email: toDelete.customer_email,
+        to_name: toDelete.customer_name,
+        cancha_name: toDelete.cancha_name ?? "",
+        cancha_addr: toDelete.cancha_addr ?? "",
+        fecha: toDelete.reservation_date,
+        hora: toDelete.start_time,
+        duracion: `${toDelete.duration_hours}h`,
+        jugadores: toDelete.format_label ?? "—",
+        extras: extrasArr.join(", ") || "—",
+        nota: toDelete.note || "—",
+        precio: toDelete.cancha_precio ?? "—",
+        phone: toDelete.cancha_phone ?? "—",
+        message,
+      }, "KPKZLlVPikmlp69eo");
+    } catch (e) {
+      console.error("EmailJS cancel:", e);
+    }
+
+    toast({ title: "✓", description: "Reserva eliminada y email de confirmación enviado." });
+    setToDelete(null);
+    setDeleting(false);
+    loadReservations();
+  };
 
   if (!user) {
     return (
@@ -89,7 +151,17 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
                   <h3 className="text-base font-bold text-foreground">{r.cancha_name ?? text.reservationOf}</h3>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" /> {r.cancha_addr}</p>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusColor(r.status)}`}>{statusLabel(r.status)}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusColor(r.status)}`}>{statusLabel(r.status)}</span>
+                  <button
+                    onClick={() => setToDelete(r)}
+                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-1.5 text-destructive transition hover:bg-destructive/20"
+                    title="Eliminar reserva"
+                    aria-label="Eliminar reserva"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
               <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
                 <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5 text-primary" /> {r.reservation_date}</div>
@@ -105,6 +177,28 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta reserva?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se enviará un email de confirmación a{" "}
+              <strong>{toDelete?.customer_email}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
