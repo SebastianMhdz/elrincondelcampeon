@@ -60,7 +60,7 @@ const CanchaAdminPanel = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("canchas").select("id,name,addr,phone,hours,precio,precio_min,tipo,image_url,servicios,benefits,social_links,gallery_urls").order("legacy_id", { ascending: true });
+    const { data, error } = await supabase.from("canchas").select("id,name,addr,phone,hours,precio,precio_min,tipo,image_url,servicios,benefits,social_links,gallery_urls,peak_hours,low_hours,promotions,entry_policies,hourly_pricing").order("legacy_id", { ascending: true });
     setLoading(false);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     const rows = (data ?? []) as unknown as CourtRow[];
@@ -88,6 +88,11 @@ const CanchaAdminPanel = () => {
       benefits: listValue(form.benefits),
       gallery_urls: listValue(form.gallery_urls),
       social_links: { instagram: socials.instagram || "", facebook: socials.facebook || "", website: socials.website || "" },
+      peak_hours: listValue(form.peak_hours),
+      low_hours: listValue(form.low_hours),
+      promotions: listValue(form.promotions),
+      entry_policies: listValue(form.entry_policies),
+      hourly_pricing: hourlyValue(form.hourly_pricing),
     } });
     setSaving(false);
     if (!result.ok) { toast({ title: "No se pudo guardar", description: result.error, variant: "destructive" }); return; }
@@ -127,6 +132,18 @@ const CanchaAdminPanel = () => {
         <div className="space-y-1.5"><Label>Web</Label><Input value={socials.website ?? ""} onChange={(e) => setForm({ ...form, social_links: { ...socials, website: e.target.value } })} /></div>
       </div>
       <div className="space-y-1.5"><Label>Galería de fotos (URLs, una por línea)</Label><Textarea rows={3} value={typeof form.gallery_urls === "string" ? form.gallery_urls : lines(form.gallery_urls)} onChange={(e) => setForm({ ...form, gallery_urls: e.target.value })} /></div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label>Horas más solicitadas (una por línea, ej: 18:00 - 20:00)</Label><Textarea rows={3} value={typeof form.peak_hours === "string" ? form.peak_hours : lines(form.peak_hours)} onChange={(e) => setForm({ ...form, peak_hours: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>Horas menos solicitadas (una por línea)</Label><Textarea rows={3} value={typeof form.low_hours === "string" ? form.low_hours : lines(form.low_hours)} onChange={(e) => setForm({ ...form, low_hours: e.target.value })} /></div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label>Promociones vigentes (una por línea)</Label><Textarea rows={3} value={typeof form.promotions === "string" ? form.promotions : lines(form.promotions)} onChange={(e) => setForm({ ...form, promotions: e.target.value })} /></div>
+        <div className="space-y-1.5"><Label>Políticas de ingreso (una por línea, ej: "Niños permitidos", "Mascotas no permitidas")</Label><Textarea rows={3} value={typeof form.entry_policies === "string" ? form.entry_policies : lines(form.entry_policies)} onChange={(e) => setForm({ ...form, entry_policies: e.target.value })} /></div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Precios por hora (formato: hora|precio, una por línea. Ej: 18:00|$120.000)</Label>
+        <Textarea rows={4} value={typeof form.hourly_pricing === "string" ? form.hourly_pricing : linesHourly(form.hourly_pricing)} onChange={(e) => setForm({ ...form, hourly_pricing: e.target.value })} />
+      </div>
       <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" />{saving ? "Guardando…" : "Guardar cancha"}</Button>
     </div>
   );
