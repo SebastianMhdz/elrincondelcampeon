@@ -70,12 +70,16 @@ const UserMenu = ({ user, onGoAccount }: Props) => {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={async () => {
+              const locale = (localStorage.getItem("app-locale") as "es"|"en"|"pt"|"de") || "es";
+              const { translations } = await import("@/lib/i18n");
+              const t = translations[locale];
               await supabase.auth.signOut();
-              toast({ title: "Sesión cerrada", description: "Hasta pronto 👋" });
+              toast({ title: t.sessionClosed, description: t.byeShort });
             }}
             className="text-destructive focus:text-destructive"
           >
-            <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+            <LogOut className="mr-2 h-4 w-4" /> {/* label */}
+            <span>{(localStorage.getItem("app-locale")||"es")==="en"?"Sign out":(localStorage.getItem("app-locale")||"es")==="pt"?"Sair":(localStorage.getItem("app-locale")||"es")==="de"?"Abmelden":"Cerrar sesión"}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
