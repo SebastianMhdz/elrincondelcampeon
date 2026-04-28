@@ -65,6 +65,59 @@ const CanchaDetail = ({ cancha, onBack, onMap, onReserve, text, user, onGoAccoun
               {cancha.servicios.map((s) => <div key={s} className="flex items-center gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 shrink-0 text-primary" />{s}</div>)}
             </div>
           </div>
+          {!!cancha.hourlyPricing?.length && (
+            <div className="mb-5">
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Precios por hora</h3>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {cancha.hourlyPricing.map((hp) => (
+                  <div key={`${hp.hour}-${hp.price}`} className="rounded-lg border border-border bg-muted/50 px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{hp.hour}</p>
+                    <p className="text-sm font-bold text-primary">{hp.price}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {(!!cancha.peakHours?.length || !!cancha.lowHours?.length) && (
+            <div className="mb-5 grid gap-3 sm:grid-cols-2">
+              {!!cancha.peakHours?.length && (
+                <div className="rounded-lg border border-primary/40 bg-primary/5 p-3">
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">🔥 Horas más solicitadas</h3>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    {cancha.peakHours.map((h) => <li key={h}>• {h}</li>)}
+                  </ul>
+                </div>
+              )}
+              {!!cancha.lowHours?.length && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
+                  <h3 className="mb-2 text-sm font-semibold text-foreground">🟢 Horas menos solicitadas</h3>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    {cancha.lowHours.map((h) => <li key={h}>• {h}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          {!!cancha.promotions?.length && (
+            <div className="mb-5">
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">🎉 Promociones vigentes</h3>
+              <div className="space-y-2">
+                {cancha.promotions.map((p) => (
+                  <div key={p} className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-foreground">{p}</div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!!cancha.entryPolicies?.length && (
+            <div className="mb-5">
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Políticas de ingreso</h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {cancha.entryPolicies.map((p) => (
+                  <div key={p} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-foreground"><Check className="h-4 w-4 shrink-0 text-primary" />{p}</div>
+                ))}
+              </div>
+            </div>
+          )}
           {!!cancha.benefits?.length && (
             <div className="mb-5">
               <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Beneficios</h3>
