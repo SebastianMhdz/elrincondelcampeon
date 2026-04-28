@@ -589,6 +589,7 @@ export const translations: Record<Locale, Translation> = {
     cannotRegister: "No se pudo inscribir", checkSlots: "Verifica si hay cupos disponibles",
     signupCancelled: "Inscripción cancelada", missingData: "Faltan datos", announcementPosted: "Anuncio publicado",
     sessionClosed: "Sesión cerrada", byeShort: "Hasta pronto 👋",
+  },
   en: {
     appName: "Champion's Corner",
     tagline: "Find, compare and book the best field for your match in Barranquilla",
