@@ -249,6 +249,93 @@ export type Translation = {
   statusOpen: string;
   statusInProgress: string;
   statusResolved: string;
+
+  // Home section
+  welcomeTo: string;
+  fastestWayToPlay: string;
+  yourNextMatch: string;
+  viewCourts: string;
+  statCourts: string;
+  statUpcomingTournaments: string;
+  statNextPlay: string;
+  upcomingTournaments: string;
+  viewAll: string;
+  loadingShort: string;
+  noTournamentsScheduled: string;
+  newEventsSoon: string;
+  signupsOpenBadge: string;
+  comingSoonBadge: string;
+  capacityTeams: string;
+  topRated: string;
+  bestPrices: string;
+  fromLabel: string;
+
+  // Tournaments section
+  tournamentsTitle: string;
+  tournamentsHint: string;
+  createTournament: string;
+  signInToCreate: string;
+  filterAll: string;
+  filterOpen: string;
+  filterMine: string;
+  noTournamentsToShow: string;
+  createFirstOne: string;
+  signInToCreateOne: string;
+  inProgress: string;
+  openShort: string;
+  finished: string;
+  upcoming: string;
+  freeSlots: string;
+
+  // Tournament detail
+  backToTournaments: string;
+  scheduled: string;
+  signupsOpenLong: string;
+  datesLabel: string;
+  slotsLabel: string;
+  slotsFree: string;
+  slotsFull: string;
+  formatLabel: string;
+  prizeLabel: string;
+  signupsTitle: string;
+  signupsClosed: string;
+  signupsClosedDesc: string;
+  signInToRegister: string;
+  registeredAs: string;
+  willNotifyAnnouncements: string;
+  cancelSignup: string;
+  slotsExhausted: string;
+  teamNameLabel: string;
+  teamNamePlaceholder: string;
+  phoneShort: string;
+  phonePlaceholder57: string;
+  registerTeam: string;
+  tournamentAnnouncements: string;
+  announcementTitle: string;
+  announcementBody: string;
+  publishAnnouncement: string;
+  noAnnouncementsYet: string;
+  organizerPanel: string;
+  signupsOpenSwitchLabel: string;
+  signupsOpenSwitchDesc: string;
+  deleteTournament: string;
+  confirmDeleteTournament: string;
+  tournamentDeleted: string;
+  tournamentNotFound: string;
+  goBack: string;
+  organizer: string;
+  missingTeamName: string;
+  writeTeamName: string;
+  registered: string;
+  teamRegistered: string;
+  cannotRegister: string;
+  checkSlots: string;
+  signupCancelled: string;
+  missingData: string;
+  announcementPosted: string;
+  // Misc
+  sessionClosed: string;
+  byeShort: string;
 };
 
 export const translations: Record<Locale, Translation> = {
