@@ -100,7 +100,12 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
           </div>
         </Button>
       </DialogTrigger>
-      <DialogContent className={`${admin ? "w-[min(96vw,1180px)] max-w-none" : "max-w-3xl"} max-h-[94vh] rounded-2xl border-border bg-background overflow-y-auto`}>
+      <DialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className={`${admin ? "w-[min(96vw,1180px)] max-w-none" : "max-w-3xl"} max-h-[94vh] rounded-2xl border-border bg-background overflow-y-auto`}
+      >
         <DialogHeader>
           <DialogTitle>{text.settings}</DialogTitle>
           <DialogDescription>{text.settingsHint}</DialogDescription>
