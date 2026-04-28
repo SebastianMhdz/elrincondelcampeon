@@ -47,8 +47,8 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
     >
       <div className="border-b border-white/10 p-3">
         <button onClick={() => onChange("inicio")} className={cn("flex w-full items-center rounded-xl text-left transition hover:bg-white/5", expanded ? "flex-col gap-2 p-2" : "justify-center p-1")}>
-          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden transition-all", expanded ? "h-40 w-40" : "h-20 w-20")}>
-            <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,0.45)]" />
+          <div className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg transition-all", expanded ? "h-40 w-40 p-3" : "h-20 w-20 p-1.5")}>
+            <img src={logoImage} alt={branding.siteName} className="h-full w-full object-contain" />
           </div>
           {expanded && (
             <div className="min-w-0 text-center">
