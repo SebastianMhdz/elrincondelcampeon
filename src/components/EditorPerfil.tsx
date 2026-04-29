@@ -71,6 +71,45 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
     }
   };
 
+  // Compress + read uploaded image to data URL (max 256px, JPEG q=0.8) to keep DB row small
+  const handleUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Archivo inválido", description: "Selecciona una imagen", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagen muy grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      const max = 256;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas no disponible");
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL("image/jpeg", 0.82);
+      setAvatarId(compressed);
+      toast({ title: "Foto cargada", description: "Recuerda guardar los cambios" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message ?? "No se pudo procesar la imagen", variant: "destructive" });
+    }
+  };
+
+  const isCustomPhoto = avatarId.startsWith("data:") || avatarId.startsWith("http");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
