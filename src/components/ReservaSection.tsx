@@ -42,14 +42,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
-  const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null }>>([]);
+  const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
     let active = true;
     const load = async () => {
       const [{ data }, rows] = await Promise.all([
-        supabase.from("canchas").select("id, legacy_id, name, precio").order("legacy_id", { ascending: true }),
+        supabase.from("canchas").select("id, legacy_id, name, precio, hourly_pricing").order("legacy_id", { ascending: true }),
         getCanchas(),
       ]);
       if (!active) return;
