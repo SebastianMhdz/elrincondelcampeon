@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
-import { CalendarCheck, CheckCircle2, Mail, LogIn } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Mail, LogIn, Smartphone, Building2, CreditCard, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 import emailjs from "emailjs-com";
 import { useToast } from "@/hooks/use-toast";
@@ -46,32 +46,61 @@ const parsePrice = (raw: string): number => {
 
 const formatCOP = (n: number) => "$" + n.toLocaleString("es-CO");
 
-// Pick price per hour from hourly_pricing array based on selected hour ("06:00 AM" etc.)
-const priceForHour = (
-  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
-  selectedHour: string,
-  fallbackText: string | null,
-): number => {
-  const start = parseRange(selectedHour + "-" + selectedHour); // single hour to minutes (using helper trick)
-  // Better: convert selectedHour directly:
+const hourLabelToMinutes = (selectedHour: string): number => {
   const [t, ap] = selectedHour.split(" ");
   let [hh] = t.split(":").map(Number);
   if (hh === 12) hh = 0;
   if (ap === "PM") hh += 12;
-  const selMin = hh * 60;
+  return hh * 60;
+};
 
+const priceAtMinutes = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  minutes: number,
+  fallbackText: string | null,
+): number => {
+  const m = ((minutes % 1440) + 1440) % 1440;
   if (Array.isArray(hourlyPricing)) {
     for (const slot of hourlyPricing) {
       if (!slot?.hour || !slot?.price) continue;
       const range = parseRange(slot.hour);
       if (!range) continue;
       const [s, e] = range;
-      const inRange = s <= e ? (selMin >= s && selMin < e) : (selMin >= s || selMin < e);
+      const inRange = s <= e ? (m >= s && m < e) : (m >= s || m < e);
       if (inRange) return parsePrice(slot.price);
     }
   }
-  // Fallback: take first number from precio text
   return parsePrice(fallbackText ?? "");
+};
+
+// Compute total considering each hourly block may have a different price
+const computeBreakdown = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  startHourLabel: string,
+  durationHours: number,
+  fallbackText: string | null,
+): { total: number; perHour: Array<{ label: string; price: number }> } => {
+  const startMin = hourLabelToMinutes(startHourLabel);
+  const perHour: Array<{ label: string; price: number }> = [];
+  let total = 0;
+  for (let i = 0; i < durationHours; i++) {
+    const m = (startMin + i * 60) % 1440;
+    const price = priceAtMinutes(hourlyPricing, m, fallbackText);
+    const hh24 = Math.floor(m / 60);
+    const ap = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = ((hh24 + 11) % 12) + 1;
+    perHour.push({ label: `${String(hh12).padStart(2, "0")}:00 ${ap}`, price });
+    total += price;
+  }
+  return { total, perHour };
+};
+
+const todayISO = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 };
 
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
@@ -88,6 +117,8 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [nota, setNota] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [lastTotal, setLastTotal] = useState(0);
+  const [lastDeposit, setLastDeposit] = useState(0);
   const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
 
@@ -132,6 +163,10 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
+    if (fecha < todayISO()) {
+      toast({ title: text.errorTitle, description: "No puedes reservar en fechas pasadas.", variant: "destructive" });
+      return;
+    }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
     const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? fallbackCanchas[0];
     setSending(true);
@@ -158,39 +193,87 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
 
     const dur = Number(duracion) || 1;
-    const pricePerHour = priceForHour(canchaDb.hourly_pricing as any, hora, canchaDb.precio);
-    const totalPrice = pricePerHour * dur;
+    const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
+    const totalPrice = breakdown.total;
+    const avgPerHour = dur > 0 ? Math.round(totalPrice / dur) : totalPrice;
     const deposit = Math.round(totalPrice * 0.30);
     const remaining = totalPrice - deposit;
-    const precioStr = pricePerHour > 0
-      ? `${formatCOP(pricePerHour)}/hora · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
+    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
+    const precioStr = totalPrice > 0
+      ? `Desglose: ${desglose} · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
       : (cancha.precio ?? "—");
 
-    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nPrecio por hora: ${formatCOP(pricePerHour)}\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
+    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nDesglose por hora:\n${breakdown.perHour.map(p => `  • ${p.label}: ${formatCOP(p.price)}`).join("\n")}\n\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
         fecha, hora, duracion: `${dur}h`, jugadores, extras: extras.join(", ") || "—",
         nota: nota || "—", precio: precioStr, phone: cancha.phone, message,
-        precio_hora: formatCOP(pricePerHour),
+        precio_hora: formatCOP(avgPerHour),
         precio_total: formatCOP(totalPrice),
         deposito: formatCOP(deposit),
         saldo: formatCOP(remaining),
+        desglose,
       }, "KPKZLlVPikmlp69eo");
     } catch (e) {
       console.error("EmailJS:", e);
     }
+    setLastDeposit(deposit);
+    setLastTotal(totalPrice);
     setSent(true);
     setSending(false);
   };
 
   if (sent) {
+    const copyToClipboard = (txt: string) => {
+      navigator.clipboard?.writeText(txt);
+      toast({ title: "Copiado", description: txt });
+    };
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="rounded-xl border border-accent/30 bg-accent/10 p-8 text-center">
-        <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-accent" />
-        <h3 className="mb-2 text-xl font-bold text-foreground">{text.reservationSent}</h3>
-        <p className="mb-4 text-sm text-muted-foreground">{text.reservationSentDesc} <strong>{email}</strong></p>
-        <button onClick={() => { setSent(false); setTel(""); setFecha(""); setNota(""); setExtras([]); }} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.makeAnother}</button>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+        <div className="rounded-xl border border-accent/30 bg-accent/10 p-6 text-center">
+          <CheckCircle2 className="mx-auto mb-3 h-14 w-14 text-accent" />
+          <h3 className="mb-1 text-xl font-bold text-foreground">{text.reservationSent}</h3>
+          <p className="text-sm text-muted-foreground">{text.reservationSentDesc} <strong>{email}</strong></p>
+        </div>
+
+        <div className="rounded-xl border border-primary/30 bg-card p-5">
+          <h3 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
+            <CreditCard className="h-5 w-5 text-primary" /> Métodos de pago
+          </h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Para confirmar tu reserva realiza el pago parcial del 30%. El saldo lo pagas en sitio.
+          </p>
+          <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Total reserva:</span><strong className="text-foreground">{formatCOP(lastTotal)}</strong></div>
+            <div className="flex justify-between"><span className="text-primary">Pago parcial (30%):</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
+            <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { name: "Nequi", icon: <Smartphone className="h-4 w-4" />, num: "300 123 4567", color: "border-pink-500/40 bg-pink-500/5" },
+              { name: "Daviplata", icon: <Smartphone className="h-4 w-4" />, num: "301 234 5678", color: "border-red-500/40 bg-red-500/5" },
+              { name: "Bancolombia", icon: <Building2 className="h-4 w-4" />, num: "Ahorros 123-456789-00", color: "border-yellow-500/40 bg-yellow-500/5" },
+              { name: "PSE", icon: <CreditCard className="h-4 w-4" />, num: "Banco / cuenta vinculada", color: "border-blue-500/40 bg-blue-500/5" },
+            ].map((m) => (
+              <div key={m.name} className={`rounded-lg border p-3 ${m.color}`}>
+                <div className="mb-1 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">{m.icon} {m.name}</div>
+                  <button onClick={() => copyToClipboard(m.num)} className="text-xs text-primary hover:underline flex items-center gap-1">
+                    <Copy className="h-3 w-3" /> Copiar
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground break-words">{m.num}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Una vez realices el pago, envía el comprobante por WhatsApp o al correo de contacto. Tu reserva quedará confirmada al validarlo.
+          </p>
+        </div>
+
+        <button onClick={() => { setSent(false); setTel(""); setFecha(""); setNota(""); setExtras([]); }} className="w-full rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.makeAnother}</button>
       </motion.div>
     );
   }
@@ -217,7 +300,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><label className={labelClass}>{text.cellphone}</label><input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder={text.cellphonePlaceholder} className={inputClass} /></div>
-          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><label className={labelClass}>{text.hour}</label><select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>{horas.map(h => <option key={h}>{h}</option>)}</select></div>
@@ -247,17 +330,22 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
           if (!cdb) return null;
           const dur = Number(duracion) || 1;
-          const pph = priceForHour(cdb.hourly_pricing as any, hora, cdb.precio);
-          if (pph <= 0) return null;
-          const total = pph * dur;
-          const dep = Math.round(total * 0.30);
+          const bd = computeBreakdown(cdb.hourly_pricing as any, hora, dur, cdb.precio);
+          if (bd.total <= 0) return null;
+          const dep = Math.round(bd.total * 0.30);
+          const varies = new Set(bd.perHour.map(p => p.price)).size > 1;
           return (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
               <p className="mb-1 font-semibold text-foreground">Resumen de pago</p>
-              <p className="text-muted-foreground">Tarifa para <strong className="text-foreground">{hora}</strong>: {formatCOP(pph)}/hora × {dur}h</p>
-              <p className="text-foreground">Total: <strong>{formatCOP(total)}</strong></p>
+              <ul className="mb-1 space-y-0.5 text-xs text-muted-foreground">
+                {bd.perHour.map((p, i) => (
+                  <li key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></li>
+                ))}
+              </ul>
+              {varies && <p className="text-[11px] text-primary">⚡ La tarifa varía por franja horaria.</p>}
+              <p className="text-foreground">Total: <strong>{formatCOP(bd.total)}</strong></p>
               <p className="text-primary">Pago parcial requerido (30%): <strong>{formatCOP(dep)}</strong></p>
-              <p className="text-xs text-muted-foreground">Saldo restante en sitio: {formatCOP(total - dep)}</p>
+              <p className="text-xs text-muted-foreground">Saldo restante en sitio: {formatCOP(bd.total - dep)}</p>
             </div>
           );
         })()}
