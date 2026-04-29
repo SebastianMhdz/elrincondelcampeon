@@ -117,6 +117,8 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [nota, setNota] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [lastTotal, setLastTotal] = useState(0);
+  const [lastDeposit, setLastDeposit] = useState(0);
   const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
 
