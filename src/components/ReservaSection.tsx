@@ -27,6 +27,53 @@ const convertHourTo24 = (value: string) => {
   return `${hours.padStart(2, "0")}:${minutes}`;
 };
 
+// Parse "12:00AM-6:00PM" or "12:00 AM - 6:00 PM" into [startMinutes, endMinutes]
+const parseRange = (raw: string): [number, number] | null => {
+  const m = raw.replace(/\s+/g, "").toUpperCase().match(/(\d{1,2}):?(\d{2})?(AM|PM)-(\d{1,2}):?(\d{2})?(AM|PM)/);
+  if (!m) return null;
+  const toMin = (h: string, mm: string | undefined, ap: string) => {
+    let hh = Number(h) % 12;
+    if (ap === "PM") hh += 12;
+    return hh * 60 + Number(mm || "0");
+  };
+  return [toMin(m[1], m[2], m[3]), toMin(m[4], m[5], m[6])];
+};
+
+const parsePrice = (raw: string): number => {
+  const digits = raw.replace(/[^\d]/g, "");
+  return digits ? Number(digits) : 0;
+};
+
+const formatCOP = (n: number) => "$" + n.toLocaleString("es-CO");
+
+// Pick price per hour from hourly_pricing array based on selected hour ("06:00 AM" etc.)
+const priceForHour = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  selectedHour: string,
+  fallbackText: string | null,
+): number => {
+  const start = parseRange(selectedHour + "-" + selectedHour); // single hour to minutes (using helper trick)
+  // Better: convert selectedHour directly:
+  const [t, ap] = selectedHour.split(" ");
+  let [hh] = t.split(":").map(Number);
+  if (hh === 12) hh = 0;
+  if (ap === "PM") hh += 12;
+  const selMin = hh * 60;
+
+  if (Array.isArray(hourlyPricing)) {
+    for (const slot of hourlyPricing) {
+      if (!slot?.hour || !slot?.price) continue;
+      const range = parseRange(slot.hour);
+      if (!range) continue;
+      const [s, e] = range;
+      const inRange = s <= e ? (selMin >= s && selMin < e) : (selMin >= s || selMin < e);
+      if (inRange) return parsePrice(slot.price);
+    }
+  }
+  // Fallback: take first number from precio text
+  return parsePrice(fallbackText ?? "");
+};
+
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : "");
