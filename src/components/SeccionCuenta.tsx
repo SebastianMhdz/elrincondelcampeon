@@ -136,7 +136,24 @@ const AccountSection = ({ text, user }: Props) => {
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{text.password}</label>
-          <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className={`${inputClass} pr-10`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <button
           onClick={mode === "signin" ? handleSignIn : handleSignUp}
