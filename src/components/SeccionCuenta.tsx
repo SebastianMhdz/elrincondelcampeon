@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin } from "lucide-react";
+import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin, Eye, EyeOff } from "lucide-react";
 import type { Translation } from "@/lib/i18n";
 import ProfileEditor from "@/components/EditorPerfil";
 import UserAvatar from "@/components/AvatarUsuario";
