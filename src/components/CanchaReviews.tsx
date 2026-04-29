@@ -25,6 +25,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -39,8 +40,16 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
       const userIds = Array.from(new Set(data.map(r => r.user_id)));
       const map = await getProfilesMap(userIds);
       setReviews(data.map(r => {
+        // Anonymous reviews are stored with comment prefix "[anon] "
+        const isAnon = r.comment?.startsWith("[anon] ");
+        const cleanComment = isAnon ? r.comment.slice(7) : r.comment;
         const p = map.get(r.user_id);
-        return { ...r, display_name: displayNameOf(p, "Anónimo"), avatar_url: p?.avatar_url ?? null };
+        return {
+          ...r,
+          comment: cleanComment,
+          display_name: isAnon ? "Anónimo" : displayNameOf(p, "Anónimo"),
+          avatar_url: isAnon ? null : (p?.avatar_url ?? null),
+        };
       }));
     }
     setLoading(false);
@@ -53,10 +62,11 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
     const safeComment = cleanVisibleText(comment, true);
     if (!safeComment) { toast({ title: text.errorTitle, description: text.reviewCommentRequired, variant: "destructive" }); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: safeComment });
+    const finalComment = anonymous ? `[anon] ${safeComment}` : safeComment;
+    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: finalComment });
     setSubmitting(false);
     if (error) { toast({ title: text.errorTitle, description: error.message, variant: "destructive" }); return; }
-    setComment(""); setRating(5);
+    setComment(""); setRating(5); setAnonymous(false);
     toast({ title: text.reviewSubmitted });
     load();
   };
