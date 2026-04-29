@@ -191,28 +191,33 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
 
     const dur = Number(duracion) || 1;
-    const pricePerHour = priceForHour(canchaDb.hourly_pricing as any, hora, canchaDb.precio);
-    const totalPrice = pricePerHour * dur;
+    const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
+    const totalPrice = breakdown.total;
+    const avgPerHour = dur > 0 ? Math.round(totalPrice / dur) : totalPrice;
     const deposit = Math.round(totalPrice * 0.30);
     const remaining = totalPrice - deposit;
-    const precioStr = pricePerHour > 0
-      ? `${formatCOP(pricePerHour)}/hora · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
+    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
+    const precioStr = totalPrice > 0
+      ? `Desglose: ${desglose} · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
       : (cancha.precio ?? "—");
 
-    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nPrecio por hora: ${formatCOP(pricePerHour)}\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
+    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nDesglose por hora:\n${breakdown.perHour.map(p => `  • ${p.label}: ${formatCOP(p.price)}`).join("\n")}\n\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
         fecha, hora, duracion: `${dur}h`, jugadores, extras: extras.join(", ") || "—",
         nota: nota || "—", precio: precioStr, phone: cancha.phone, message,
-        precio_hora: formatCOP(pricePerHour),
+        precio_hora: formatCOP(avgPerHour),
         precio_total: formatCOP(totalPrice),
         deposito: formatCOP(deposit),
         saldo: formatCOP(remaining),
+        desglose,
       }, "KPKZLlVPikmlp69eo");
     } catch (e) {
       console.error("EmailJS:", e);
     }
+    setLastDeposit(deposit);
+    setLastTotal(totalPrice);
     setSent(true);
     setSending(false);
   };
