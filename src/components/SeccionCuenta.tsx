@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin } from "lucide-react";
+import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin, Eye, EyeOff } from "lucide-react";
 import type { Translation } from "@/lib/i18n";
 import ProfileEditor from "@/components/EditorPerfil";
 import UserAvatar from "@/components/AvatarUsuario";
@@ -22,6 +22,7 @@ const AccountSection = ({ text, user }: Props) => {
   const [loading, setLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
@@ -135,7 +136,24 @@ const AccountSection = ({ text, user }: Props) => {
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{text.password}</label>
-          <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className={`${inputClass} pr-10`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         <button
           onClick={mode === "signin" ? handleSignIn : handleSignUp}

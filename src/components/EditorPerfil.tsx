@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AVATAR_CATALOG, DEFAULT_AVATAR_ID } from "@/lib/avatares";
 import { getProfile, upsertProfile, type UserProfile } from "@/lib/perfil";
 import UserAvatar from "./AvatarUsuario";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Upload, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { cleanVisibleText, cn } from "@/lib/utils";
 
@@ -71,6 +71,45 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
     }
   };
 
+  // Compress + read uploaded image to data URL (max 256px, JPEG q=0.8) to keep DB row small
+  const handleUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Archivo inválido", description: "Selecciona una imagen", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagen muy grande", description: "Máximo 5MB", variant: "destructive" });
+      return;
+    }
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      const max = 256;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas no disponible");
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL("image/jpeg", 0.82);
+      setAvatarId(compressed);
+      toast({ title: "Foto cargada", description: "Recuerda guardar los cambios" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e?.message ?? "No se pudo procesar la imagen", variant: "destructive" });
+    }
+  };
+
+  const isCustomPhoto = avatarId.startsWith("data:") || avatarId.startsWith("http");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
@@ -113,7 +152,34 @@ const ProfileEditor = ({ open, onOpenChange, user, onSaved }: Props) => {
             </div>
 
             <div>
-              <Label className="mb-2 block">Elige un avatar</Label>
+              <Label className="mb-2 block">Foto personalizada</Label>
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 p-3">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90">
+                  <Upload className="h-3.5 w-3.5" />
+                  Subir mi foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUpload(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {isCustomPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarId(DEFAULT_AVATAR_ID)}
+                    className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" /> Quitar foto
+                  </button>
+                )}
+                <p className="text-[11px] text-muted-foreground">JPG/PNG · máx. 5MB · se redimensiona automáticamente</p>
+              </div>
+              <Label className="mb-2 block">O elige un avatar predefinido</Label>
               <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
                 {AVATAR_CATALOG.map(a => {
                   const selected = a.id === avatarId;

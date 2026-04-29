@@ -33,8 +33,8 @@ export const DEFAULT_AVATAR_ID = "preset:11";
 
 export function resolveAvatar(id: string | null | undefined): string | null {
   if (!id) return null;
-  // If it's an external URL stored in profile (legacy), pass through
-  if (id.startsWith("http")) return id;
+  // External URL or data URL (custom uploaded photo)
+  if (id.startsWith("http") || id.startsWith("data:")) return id;
   const found = AVATAR_CATALOG.find(a => a.id === id);
   return found?.src ?? null;
 }

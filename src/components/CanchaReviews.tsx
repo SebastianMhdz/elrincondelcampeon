@@ -25,6 +25,7 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -39,8 +40,16 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
       const userIds = Array.from(new Set(data.map(r => r.user_id)));
       const map = await getProfilesMap(userIds);
       setReviews(data.map(r => {
+        // Anonymous reviews are stored with comment prefix "[anon] "
+        const isAnon = r.comment?.startsWith("[anon] ");
+        const cleanComment = isAnon ? r.comment.slice(7) : r.comment;
         const p = map.get(r.user_id);
-        return { ...r, display_name: displayNameOf(p, "Anónimo"), avatar_url: p?.avatar_url ?? null };
+        return {
+          ...r,
+          comment: cleanComment,
+          display_name: isAnon ? "Anónimo" : displayNameOf(p, "Anónimo"),
+          avatar_url: isAnon ? null : (p?.avatar_url ?? null),
+        };
       }));
     }
     setLoading(false);
@@ -53,10 +62,11 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
     const safeComment = cleanVisibleText(comment, true);
     if (!safeComment) { toast({ title: text.errorTitle, description: text.reviewCommentRequired, variant: "destructive" }); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: safeComment });
+    const finalComment = anonymous ? `[anon] ${safeComment}` : safeComment;
+    const { error } = await supabase.from("cancha_reviews").insert({ cancha_id: canchaId, user_id: user.id, rating, comment: finalComment });
     setSubmitting(false);
     if (error) { toast({ title: text.errorTitle, description: error.message, variant: "destructive" }); return; }
-    setComment(""); setRating(5);
+    setComment(""); setRating(5); setAnonymous(false);
     toast({ title: text.reviewSubmitted });
     load();
   };
@@ -81,7 +91,13 @@ const CanchaReviews = ({ canchaId, user, text, onGoAccount }: Props) => {
             ))}
           </div>
           <textarea value={comment} onChange={(e) => setComment(cleanVisibleText(e.target.value))} placeholder={text.reviewPlaceholder} className="w-full rounded-md border border-border bg-background p-2 text-sm text-foreground outline-none focus:border-primary" rows={2} maxLength={500} />
-          <button onClick={submit} disabled={submitting} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">{submitting ? "…" : text.submitReview}</button>
+          <div className="flex items-center justify-between gap-2">
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="accent-primary" />
+              Publicar como anónimo (oculta tu nombre y avatar)
+            </label>
+            <button onClick={submit} disabled={submitting} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">{submitting ? "…" : text.submitReview}</button>
+          </div>
         </div>
       ) : (
         <button onClick={onGoAccount} className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-3 text-xs text-muted-foreground hover:bg-muted">

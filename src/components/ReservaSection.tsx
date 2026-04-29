@@ -27,6 +27,53 @@ const convertHourTo24 = (value: string) => {
   return `${hours.padStart(2, "0")}:${minutes}`;
 };
 
+// Parse "12:00AM-6:00PM" or "12:00 AM - 6:00 PM" into [startMinutes, endMinutes]
+const parseRange = (raw: string): [number, number] | null => {
+  const m = raw.replace(/\s+/g, "").toUpperCase().match(/(\d{1,2}):?(\d{2})?(AM|PM)-(\d{1,2}):?(\d{2})?(AM|PM)/);
+  if (!m) return null;
+  const toMin = (h: string, mm: string | undefined, ap: string) => {
+    let hh = Number(h) % 12;
+    if (ap === "PM") hh += 12;
+    return hh * 60 + Number(mm || "0");
+  };
+  return [toMin(m[1], m[2], m[3]), toMin(m[4], m[5], m[6])];
+};
+
+const parsePrice = (raw: string): number => {
+  const digits = raw.replace(/[^\d]/g, "");
+  return digits ? Number(digits) : 0;
+};
+
+const formatCOP = (n: number) => "$" + n.toLocaleString("es-CO");
+
+// Pick price per hour from hourly_pricing array based on selected hour ("06:00 AM" etc.)
+const priceForHour = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  selectedHour: string,
+  fallbackText: string | null,
+): number => {
+  const start = parseRange(selectedHour + "-" + selectedHour); // single hour to minutes (using helper trick)
+  // Better: convert selectedHour directly:
+  const [t, ap] = selectedHour.split(" ");
+  let [hh] = t.split(":").map(Number);
+  if (hh === 12) hh = 0;
+  if (ap === "PM") hh += 12;
+  const selMin = hh * 60;
+
+  if (Array.isArray(hourlyPricing)) {
+    for (const slot of hourlyPricing) {
+      if (!slot?.hour || !slot?.price) continue;
+      const range = parseRange(slot.hour);
+      if (!range) continue;
+      const [s, e] = range;
+      const inRange = s <= e ? (selMin >= s && selMin < e) : (selMin >= s || selMin < e);
+      if (inRange) return parsePrice(slot.price);
+    }
+  }
+  // Fallback: take first number from precio text
+  return parsePrice(fallbackText ?? "");
+};
+
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : "");
@@ -42,14 +89,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
-  const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null }>>([]);
+  const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
     let active = true;
     const load = async () => {
       const [{ data }, rows] = await Promise.all([
-        supabase.from("canchas").select("id, legacy_id, name, precio").order("legacy_id", { ascending: true }),
+        supabase.from("canchas").select("id, legacy_id, name, precio, hourly_pricing").order("legacy_id", { ascending: true }),
         getCanchas(),
       ]);
       if (!active) return;
@@ -110,12 +157,25 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       setSending(false); return;
     }
 
-    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${duracion}h\nModalidad: ${jugadores}`;
+    const dur = Number(duracion) || 1;
+    const pricePerHour = priceForHour(canchaDb.hourly_pricing as any, hora, canchaDb.precio);
+    const totalPrice = pricePerHour * dur;
+    const deposit = Math.round(totalPrice * 0.30);
+    const remaining = totalPrice - deposit;
+    const precioStr = pricePerHour > 0
+      ? `${formatCOP(pricePerHour)}/hora · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
+      : (cancha.precio ?? "—");
+
+    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nPrecio por hora: ${formatCOP(pricePerHour)}\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
-        fecha, hora, duracion: `${duracion}h`, jugadores, extras: extras.join(", ") || "—",
-        nota: nota || "—", precio: cancha.precio, phone: cancha.phone, message,
+        fecha, hora, duracion: `${dur}h`, jugadores, extras: extras.join(", ") || "—",
+        nota: nota || "—", precio: precioStr, phone: cancha.phone, message,
+        precio_hora: formatCOP(pricePerHour),
+        precio_total: formatCOP(totalPrice),
+        deposito: formatCOP(deposit),
+        saldo: formatCOP(remaining),
       }, "KPKZLlVPikmlp69eo");
     } catch (e) {
       console.error("EmailJS:", e);
@@ -183,6 +243,24 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <label className={labelClass}>{text.additionalNote}</label>
           <textarea value={nota} onChange={(e) => setNota(e.target.value)} placeholder={text.notePlaceholder} className={`${inputClass} min-h-[80px] resize-y`} />
         </div>
+        {(() => {
+          const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+          if (!cdb) return null;
+          const dur = Number(duracion) || 1;
+          const pph = priceForHour(cdb.hourly_pricing as any, hora, cdb.precio);
+          if (pph <= 0) return null;
+          const total = pph * dur;
+          const dep = Math.round(total * 0.30);
+          return (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+              <p className="mb-1 font-semibold text-foreground">Resumen de pago</p>
+              <p className="text-muted-foreground">Tarifa para <strong className="text-foreground">{hora}</strong>: {formatCOP(pph)}/hora × {dur}h</p>
+              <p className="text-foreground">Total: <strong>{formatCOP(total)}</strong></p>
+              <p className="text-primary">Pago parcial requerido (30%): <strong>{formatCOP(dep)}</strong></p>
+              <p className="text-xs text-muted-foreground">Saldo restante en sitio: {formatCOP(total - dep)}</p>
+            </div>
+          );
+        })()}
         <button onClick={handleSubmit} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60">
           <Mail className="h-4 w-4" /> {sending ? text.sending : text.submitReservation}
         </button>
