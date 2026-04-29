@@ -243,6 +243,24 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <label className={labelClass}>{text.additionalNote}</label>
           <textarea value={nota} onChange={(e) => setNota(e.target.value)} placeholder={text.notePlaceholder} className={`${inputClass} min-h-[80px] resize-y`} />
         </div>
+        {(() => {
+          const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+          if (!cdb) return null;
+          const dur = Number(duracion) || 1;
+          const pph = priceForHour(cdb.hourly_pricing as any, hora, cdb.precio);
+          if (pph <= 0) return null;
+          const total = pph * dur;
+          const dep = Math.round(total * 0.30);
+          return (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+              <p className="mb-1 font-semibold text-foreground">Resumen de pago</p>
+              <p className="text-muted-foreground">Tarifa para <strong className="text-foreground">{hora}</strong>: {formatCOP(pph)}/hora × {dur}h</p>
+              <p className="text-foreground">Total: <strong>{formatCOP(total)}</strong></p>
+              <p className="text-primary">Pago parcial requerido (30%): <strong>{formatCOP(dep)}</strong></p>
+              <p className="text-xs text-muted-foreground">Saldo restante en sitio: {formatCOP(total - dep)}</p>
+            </div>
+          );
+        })()}
         <button onClick={handleSubmit} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60">
           <Mail className="h-4 w-4" /> {sending ? text.sending : text.submitReservation}
         </button>
