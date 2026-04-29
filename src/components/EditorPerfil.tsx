@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AVATAR_CATALOG, DEFAULT_AVATAR_ID } from "@/lib/avatares";
 import { getProfile, upsertProfile, type UserProfile } from "@/lib/perfil";
 import UserAvatar from "./AvatarUsuario";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Upload, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { cleanVisibleText, cn } from "@/lib/utils";
 
