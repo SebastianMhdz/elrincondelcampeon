@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
-import { CalendarCheck, CheckCircle2, Mail, LogIn } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Mail, LogIn, Smartphone, Building2, CreditCard, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 import emailjs from "emailjs-com";
 import { useToast } from "@/hooks/use-toast";
