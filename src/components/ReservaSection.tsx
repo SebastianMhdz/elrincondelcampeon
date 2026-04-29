@@ -242,13 +242,40 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <h3 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
             <CreditCard className="h-5 w-5 text-primary" /> Métodos de pago
           </h3>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Para confirmar tu reserva realiza el pago parcial del 30%. El saldo lo pagas en sitio.
+          <p className="mb-3 text-xs text-muted-foreground">
+            Elige cómo deseas pagar para confirmar tu reserva.
           </p>
+
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setPaymentMode("partial")}
+              className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "partial" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
+            >
+              <p className="font-semibold text-foreground">Pago parcial (30%)</p>
+              <p className="text-xs text-muted-foreground">Confirma con el depósito y paga el resto en sitio.</p>
+            </button>
+            <button
+              onClick={() => setPaymentMode("full")}
+              className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "full" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
+            >
+              <p className="font-semibold text-foreground">Pago completo (100%)</p>
+              <p className="text-xs text-muted-foreground">Cancela todo ahora, sin saldo pendiente.</p>
+            </button>
+          </div>
+
           <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Total reserva:</span><strong className="text-foreground">{formatCOP(lastTotal)}</strong></div>
-            <div className="flex justify-between"><span className="text-primary">Pago parcial (30%):</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
-            <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
+            {paymentMode === "partial" ? (
+              <>
+                <div className="flex justify-between"><span className="text-primary">Pago parcial (30%):</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between"><span className="text-primary">A pagar ahora (100%):</span><strong className="text-primary">{formatCOP(lastTotal)}</strong></div>
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">$0</span></div>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -266,6 +293,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground break-words">{m.num}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Monto: <strong className="text-foreground">{formatCOP(paymentMode === "partial" ? lastDeposit : lastTotal)}</strong></p>
               </div>
             ))}
           </div>
