@@ -225,12 +225,55 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   };
 
   if (sent) {
+    const copyToClipboard = (txt: string) => {
+      navigator.clipboard?.writeText(txt);
+      toast({ title: "Copiado", description: txt });
+    };
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="rounded-xl border border-accent/30 bg-accent/10 p-8 text-center">
-        <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-accent" />
-        <h3 className="mb-2 text-xl font-bold text-foreground">{text.reservationSent}</h3>
-        <p className="mb-4 text-sm text-muted-foreground">{text.reservationSentDesc} <strong>{email}</strong></p>
-        <button onClick={() => { setSent(false); setTel(""); setFecha(""); setNota(""); setExtras([]); }} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.makeAnother}</button>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
+        <div className="rounded-xl border border-accent/30 bg-accent/10 p-6 text-center">
+          <CheckCircle2 className="mx-auto mb-3 h-14 w-14 text-accent" />
+          <h3 className="mb-1 text-xl font-bold text-foreground">{text.reservationSent}</h3>
+          <p className="text-sm text-muted-foreground">{text.reservationSentDesc} <strong>{email}</strong></p>
+        </div>
+
+        <div className="rounded-xl border border-primary/30 bg-card p-5">
+          <h3 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
+            <CreditCard className="h-5 w-5 text-primary" /> Métodos de pago
+          </h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Para confirmar tu reserva realiza el pago parcial del 30%. El saldo lo pagas en sitio.
+          </p>
+          <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Total reserva:</span><strong className="text-foreground">{formatCOP(lastTotal)}</strong></div>
+            <div className="flex justify-between"><span className="text-primary">Pago parcial (30%):</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
+            <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { name: "Nequi", icon: <Smartphone className="h-4 w-4" />, num: "300 123 4567", color: "border-pink-500/40 bg-pink-500/5" },
+              { name: "Daviplata", icon: <Smartphone className="h-4 w-4" />, num: "301 234 5678", color: "border-red-500/40 bg-red-500/5" },
+              { name: "Bancolombia", icon: <Building2 className="h-4 w-4" />, num: "Ahorros 123-456789-00", color: "border-yellow-500/40 bg-yellow-500/5" },
+              { name: "PSE", icon: <CreditCard className="h-4 w-4" />, num: "Banco / cuenta vinculada", color: "border-blue-500/40 bg-blue-500/5" },
+            ].map((m) => (
+              <div key={m.name} className={`rounded-lg border p-3 ${m.color}`}>
+                <div className="mb-1 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">{m.icon} {m.name}</div>
+                  <button onClick={() => copyToClipboard(m.num)} className="text-xs text-primary hover:underline flex items-center gap-1">
+                    <Copy className="h-3 w-3" /> Copiar
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground break-words">{m.num}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Una vez realices el pago, envía el comprobante por WhatsApp o al correo de contacto. Tu reserva quedará confirmada al validarlo.
+          </p>
+        </div>
+
+        <button onClick={() => { setSent(false); setTel(""); setFecha(""); setNota(""); setExtras([]); }} className="w-full rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.makeAnother}</button>
       </motion.div>
     );
   }
