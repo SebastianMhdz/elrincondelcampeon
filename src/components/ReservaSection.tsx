@@ -46,32 +46,61 @@ const parsePrice = (raw: string): number => {
 
 const formatCOP = (n: number) => "$" + n.toLocaleString("es-CO");
 
-// Pick price per hour from hourly_pricing array based on selected hour ("06:00 AM" etc.)
-const priceForHour = (
-  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
-  selectedHour: string,
-  fallbackText: string | null,
-): number => {
-  const start = parseRange(selectedHour + "-" + selectedHour); // single hour to minutes (using helper trick)
-  // Better: convert selectedHour directly:
+const hourLabelToMinutes = (selectedHour: string): number => {
   const [t, ap] = selectedHour.split(" ");
   let [hh] = t.split(":").map(Number);
   if (hh === 12) hh = 0;
   if (ap === "PM") hh += 12;
-  const selMin = hh * 60;
+  return hh * 60;
+};
 
+const priceAtMinutes = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  minutes: number,
+  fallbackText: string | null,
+): number => {
+  const m = ((minutes % 1440) + 1440) % 1440;
   if (Array.isArray(hourlyPricing)) {
     for (const slot of hourlyPricing) {
       if (!slot?.hour || !slot?.price) continue;
       const range = parseRange(slot.hour);
       if (!range) continue;
       const [s, e] = range;
-      const inRange = s <= e ? (selMin >= s && selMin < e) : (selMin >= s || selMin < e);
+      const inRange = s <= e ? (m >= s && m < e) : (m >= s || m < e);
       if (inRange) return parsePrice(slot.price);
     }
   }
-  // Fallback: take first number from precio text
   return parsePrice(fallbackText ?? "");
+};
+
+// Compute total considering each hourly block may have a different price
+const computeBreakdown = (
+  hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
+  startHourLabel: string,
+  durationHours: number,
+  fallbackText: string | null,
+): { total: number; perHour: Array<{ label: string; price: number }> } => {
+  const startMin = hourLabelToMinutes(startHourLabel);
+  const perHour: Array<{ label: string; price: number }> = [];
+  let total = 0;
+  for (let i = 0; i < durationHours; i++) {
+    const m = (startMin + i * 60) % 1440;
+    const price = priceAtMinutes(hourlyPricing, m, fallbackText);
+    const hh24 = Math.floor(m / 60);
+    const ap = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = ((hh24 + 11) % 12) + 1;
+    perHour.push({ label: `${String(hh12).padStart(2, "0")}:00 ${ap}`, price });
+    total += price;
+  }
+  return { total, perHour };
+};
+
+const todayISO = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 };
 
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
