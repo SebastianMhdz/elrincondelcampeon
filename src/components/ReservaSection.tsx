@@ -161,6 +161,10 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
+    if (fecha < todayISO()) {
+      toast({ title: text.errorTitle, description: "No puedes reservar en fechas pasadas.", variant: "destructive" });
+      return;
+    }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
     const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? fallbackCanchas[0];
     setSending(true);
