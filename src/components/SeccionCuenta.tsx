@@ -22,6 +22,7 @@ const AccountSection = ({ text, user }: Props) => {
   const [loading, setLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
