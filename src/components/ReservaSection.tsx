@@ -115,6 +115,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [jugadores, setJugadores] = useState("Fútbol 5 (10 jug.)");
   const [extras, setExtras] = useState<string[]>([]);
   const [nota, setNota] = useState("");
+  const [paymentMode, setPaymentMode] = useState<"partial" | "full">("partial");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [lastTotal, setLastTotal] = useState(0);
