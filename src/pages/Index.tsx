@@ -16,6 +16,7 @@ import AccountSection from "@/components/SeccionCuenta";
 import FooterSection from "@/components/FooterSection";
 import RickyBot from "@/components/ChatRicky";
 import UserMenu from "@/components/MenuUsuario";
+import SettingsPanel from "@/components/PanelConfiguracion";
 import type { Cancha } from "@/data/canchas";
 import { applyTheme, type ThemeMode } from "@/lib/theme";
 import { defaultBranding, getBrandingSettings, type BrandingSettings } from "@/lib/configuracion-sitio";
