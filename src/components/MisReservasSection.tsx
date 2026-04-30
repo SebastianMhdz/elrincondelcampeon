@@ -75,8 +75,22 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const hoursUntil = (r: Reservation) => {
+    const dt = new Date(`${r.reservation_date}T${r.start_time}`);
+    return (dt.getTime() - Date.now()) / 36e5;
+  };
+
   const handleDelete = async () => {
     if (!toDelete) return;
+    if (hoursUntil(toDelete) < 24) {
+      toast({
+        title: "No se puede cancelar",
+        description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+        variant: "destructive",
+      });
+      setToDelete(null);
+      return;
+    }
     setDeleting(true);
     const { error } = await supabase.from("reservations").delete().eq("id", toDelete.id);
     if (error) {
