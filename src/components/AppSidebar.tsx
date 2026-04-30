@@ -22,6 +22,9 @@ interface AppSidebarProps {
 const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDarkModeChange, text, branding, onBrandingChange }: AppSidebarProps) => {
   const [hovered, setHovered] = useState(false);
   const expanded = hovered;
+
+  const isSettingsOpen = () => typeof document !== "undefined" && document.body.dataset.settingsOpen === "1";
+
   const items: { id: Tab; label: string; hint: string; icon: typeof LayoutGrid }[] = [
     { id: "inicio", label: text.home, hint: text.heroBadge, icon: Home },
     { id: "canchas", label: text.courts, hint: text.courtsHint, icon: LayoutGrid },
@@ -38,7 +41,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
 
   return (
     <aside
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => { if (!isSettingsOpen()) setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
       className={cn(
         "fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-sidebar-border bg-[linear-gradient(180deg,hsl(var(--sidebar-primary)),hsl(var(--sidebar-background)))] text-sidebar-foreground transition-[width] duration-300 md:flex md:flex-col",

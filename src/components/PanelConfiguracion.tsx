@@ -43,6 +43,15 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
     if (open) fetchAdminLogs().then(setLogs);
   }, [open, admin]);
 
+  useEffect(() => {
+    if (open) {
+      document.body.dataset.settingsOpen = "1";
+    } else {
+      delete document.body.dataset.settingsOpen;
+    }
+    return () => { delete document.body.dataset.settingsOpen; };
+  }, [open]);
+
   const localeOptions = useMemo(() => [
     { value: "es", label: "Español" },
     { value: "en", label: "English" },

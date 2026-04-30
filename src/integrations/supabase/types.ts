@@ -533,6 +533,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_cancha_busy_slots: {
+        Args: { _cancha_id: string; _from: string; _to: string }
+        Returns: {
+          duration_hours: number
+          reservation_date: string
+          start_time: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

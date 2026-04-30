@@ -16,6 +16,7 @@ import AccountSection from "@/components/SeccionCuenta";
 import FooterSection from "@/components/FooterSection";
 import RickyBot from "@/components/ChatRicky";
 import UserMenu from "@/components/MenuUsuario";
+import SettingsPanel from "@/components/PanelConfiguracion";
 import type { Cancha } from "@/data/canchas";
 import { applyTheme, type ThemeMode } from "@/lib/theme";
 import { defaultBranding, getBrandingSettings, type BrandingSettings } from "@/lib/configuracion-sitio";
@@ -70,7 +71,16 @@ const Index = () => {
                 <p className="truncate text-sm font-bold text-foreground">{branding.siteName}</p>
                 <p className="truncate text-xs text-muted-foreground">{branding.tagline}</p>
               </div>
-              <UserMenu user={user} onGoAccount={() => setTab("cuenta")} />
+              <div className="flex items-center gap-2">
+                <div className="md:hidden [&_button]:!text-foreground [&_button:hover]:!bg-accent [&_button_p]:!text-foreground [&_button_p.text-white\/60]:!text-muted-foreground">
+                  <SettingsPanel
+                    locale={locale} onLocaleChange={setLocale}
+                    darkMode={theme === "dark"} onDarkModeChange={(v) => setTheme(v ? "dark" : "light")}
+                    text={text} branding={branding} onBrandingChange={setBranding}
+                  />
+                </div>
+                <UserMenu user={user} onGoAccount={() => setTab("cuenta")} />
+              </div>
             </div>
           </header>
 
