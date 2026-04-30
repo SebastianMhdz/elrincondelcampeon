@@ -332,10 +332,61 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const inputClass = "w-full rounded-lg border border-border bg-card p-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
   const labelClass = "mb-1.5 block text-sm font-medium text-muted-foreground";
 
+  // Compute set of occupied hour-labels for selected date based on busySlots
+  const minutesToHourLabel = (m: number) => {
+    const hh24 = Math.floor(m / 60);
+    const ap = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = ((hh24 + 11) % 12) + 1;
+    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
+  };
+  const occupiedHourLabels = useMemo(() => {
+    const set = new Set<string>();
+    if (!fecha) return set;
+    for (const slot of busySlots) {
+      if (slot.reservation_date !== fecha) continue;
+      const [hh, mm] = slot.start_time.split(":").map(Number);
+      const start = hh * 60 + (mm || 0);
+      for (let i = 0; i < (slot.duration_hours || 1); i++) {
+        set.add(minutesToHourLabel(start + i * 60));
+      }
+    }
+    return set;
+  }, [fecha, busySlots]);
+
+  // Day-status map for visible month (key = "YYYY-MM-DD")
+  const dayStatuses = useMemo(() => {
+    const map = new Map<string, { occupied: number }>();
+    for (const slot of busySlots) {
+      const prev = map.get(slot.reservation_date) ?? { occupied: 0 };
+      prev.occupied += slot.duration_hours || 1;
+      map.set(slot.reservation_date, prev);
+    }
+    return map;
+  }, [busySlots]);
+
+  const totalSlotsPerDay = horas.length;
+  const fmtDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+
+  // Build calendar grid (weeks)
+  const calendarDays = useMemo(() => {
+    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const startWeekday = first.getDay(); // 0 Sun .. 6 Sat
+    const days: Array<{ date: Date | null }> = [];
+    for (let i = 0; i < startWeekday; i++) days.push({ date: null });
+    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
+    while (days.length % 7 !== 0) days.push({ date: null });
+    return days;
+  }, [calendarMonth]);
+
+  const monthLabel = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+
   return (
-    <div className="section-sport-panel rounded-[22px] p-5 md:p-6">
+    <div className="section-sport-panel rounded-[22px] p-4 sm:p-5 md:p-6">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><CalendarCheck className="h-5 w-5 text-primary" /> {text.bookYourCourtTitle}</h2>
-      <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5">
         <div>
           <label className={labelClass}>{text.court}</label>
           <select value={canchaId} onChange={(e) => setCanchaId(e.target.value)} className={inputClass}>
@@ -345,6 +396,90 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
               : canchas.map((c) => <option key={c.id} value={String(c.id)}>{c.name} – {c.precio}</option>)}
           </select>
         </div>
+
+        {canchaId && (
+          <div className="rounded-xl border border-border bg-muted/30 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))} className="rounded-md border border-border bg-card p-1.5 hover:bg-accent">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <p className="text-sm font-semibold capitalize text-foreground">{text.availabilityCalendar} · {monthLabel}</p>
+              <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))} className="rounded-md border border-border bg-card p-1.5 hover:bg-accent">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
+              {weekDays.map((d, i) => <div key={i}>{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((cell, idx) => {
+                if (!cell.date) return <div key={idx} />;
+                const key = fmtDay(cell.date);
+                const isPast = cell.date < today0;
+                const occ = dayStatuses.get(key)?.occupied ?? 0;
+                const allBusy = occ >= totalSlotsPerDay;
+                const someBusy = occ > 0 && !allBusy;
+                const selected = fecha === key;
+                let cls = "border-border bg-card text-foreground hover:bg-accent";
+                if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
+                else if (allBusy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                else if (someBusy) cls = "border-orange-500/50 bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25";
+                else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
+                if (selected) cls += " ring-2 ring-primary";
+                return (
+                  <button
+                    key={idx} type="button"
+                    disabled={isPast || allBusy}
+                    onClick={() => setFecha(key)}
+                    className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
+                  >
+                    {cell.date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+            <ul className="mt-3 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+              <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/70 align-middle" />{text.legendAvailable}</li>
+              <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-orange-500/70 align-middle" />{text.legendSomeBusy}</li>
+              <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-red-500/70 align-middle" />{text.legendAllBusy}</li>
+              <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted align-middle" />{text.legendPast}</li>
+            </ul>
+
+            {fecha ? (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  {horas.map((h) => {
+                    const isOcc = occupiedHourLabels.has(h);
+                    const isSel = hora === h && !isOcc;
+                    return (
+                      <button
+                        key={h} type="button"
+                        disabled={isOcc}
+                        onClick={() => !isOcc && setHora(h)}
+                        className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${
+                          isOcc
+                            ? "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed"
+                            : isSel
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                        }`}
+                      >
+                        {h} · {isOcc ? text.occupied : text.available}
+                      </button>
+                    );
+                  })}
+                </div>
+                {horas.every((h) => occupiedHourLabels.has(h)) && (
+                  <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
+                )}
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-muted-foreground">{text.pickDateToSeeHours}</p>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><label className={labelClass}>{text.fullNameLabel}</label><input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder={text.yourName} className={inputClass} /></div>
           <div><label className={labelClass}>{text.emailLabel}</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={text.emailPlaceholder} className={inputClass} /></div>
@@ -354,7 +489,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div><label className={labelClass}>{text.hour}</label><select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>{horas.map(h => <option key={h}>{h}</option>)}</select></div>
+          <div><label className={labelClass}>{text.hour}</label><select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>{horas.map(h => <option key={h} disabled={occupiedHourLabels.has(h)}>{h}{occupiedHourLabels.has(h) ? ` · ${text.occupied}` : ""}</option>)}</select></div>
           <div><label className={labelClass}>{text.duration}</label><select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={inputClass}><option value="1">{text.hour1}</option><option value="2">{text.hour2}</option><option value="3">{text.hour3}</option></select></div>
         </div>
         <div>
