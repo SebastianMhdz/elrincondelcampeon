@@ -148,6 +148,23 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
   }, [user]);
 
+  // Load busy slots for the selected court / visible month
+  useEffect(() => {
+    const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+    if (!cdb) { setBusySlots([]); return; }
+    const from = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const to = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    let active = true;
+    (async () => {
+      const { data } = await supabase.rpc("get_cancha_busy_slots", {
+        _cancha_id: cdb.id, _from: fmt(from), _to: fmt(to),
+      });
+      if (active) setBusySlots((data as any[]) ?? []);
+    })();
+    return () => { active = false; };
+  }, [canchaId, dbCanchas, calendarMonth]);
+
   if (!user) {
     return (
       <div className="section-sport-panel rounded-[22px] p-8 text-center">
