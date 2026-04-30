@@ -122,6 +122,8 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [lastDeposit, setLastDeposit] = useState(0);
   const [canchas, setCanchas] = useState<Cancha[]>(fallbackCanchas);
   const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
+  const [busySlots, setBusySlots] = useState<Array<{ reservation_date: string; start_time: string; duration_hours: number }>>([]);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); return d; });
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
