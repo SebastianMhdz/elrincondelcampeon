@@ -166,6 +166,35 @@ export type Translation = {
   completeAllFields: string;
   slotUnavailable: string;
   slotUnavailableDesc: string;
+  pastDateError: string;
+  paymentSummary: string;
+  variesByHour: string;
+  totalLabel: string;
+  partialPaymentRequired: string;
+  remainingAtSite: string;
+  paymentMethods: string;
+  choosePayment: string;
+  partialPayment: string;
+  partialPaymentDesc: string;
+  fullPayment: string;
+  fullPaymentDesc: string;
+  totalReservation: string;
+  payNow: string;
+  balanceAtSite: string;
+  amountLabel: string;
+  copy: string;
+  copied: string;
+  payOnlineLink: string;
+  paymentInstructions: string;
+  availabilityCalendar: string;
+  pickDateToSeeHours: string;
+  available: string;
+  occupied: string;
+  legendAvailable: string;
+  legendSomeBusy: string;
+  legendAllBusy: string;
+  legendPast: string;
+  noHoursAvailable: string;
 
   // Soporte section
   supportContact: string;
