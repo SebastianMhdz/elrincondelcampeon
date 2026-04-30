@@ -247,8 +247,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   if (sent) {
     const copyToClipboard = (txt: string) => {
       navigator.clipboard?.writeText(txt);
-      toast({ title: "Copiado", description: txt });
+      toast({ title: text.copied, description: txt });
     };
+    const methods = [
+      { name: "Nequi", icon: <Smartphone className="h-4 w-4" />, num: "300 123 4567", color: "border-pink-500/40 bg-pink-500/5", url: "https://www.nequi.com.co" },
+      { name: "Daviplata", icon: <Smartphone className="h-4 w-4" />, num: "301 234 5678", color: "border-red-500/40 bg-red-500/5", url: "https://www.daviplata.com" },
+      { name: "Bancolombia", icon: <Building2 className="h-4 w-4" />, num: "Ahorros 123-456789-00", color: "border-yellow-500/40 bg-yellow-500/5", url: "https://www.bancolombia.com" },
+      { name: "PSE", icon: <CreditCard className="h-4 w-4" />, num: "Banco / cuenta vinculada", color: "border-blue-500/40 bg-blue-500/5", url: "https://www.pse.com.co" },
+    ];
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-4">
         <div className="rounded-xl border border-accent/30 bg-accent/10 p-6 text-center">
@@ -257,68 +263,65 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <p className="text-sm text-muted-foreground">{text.reservationSentDesc} <strong>{email}</strong></p>
         </div>
 
-        <div className="rounded-xl border border-primary/30 bg-card p-5">
+        <div className="rounded-xl border border-primary/30 bg-card p-4 sm:p-5">
           <h3 className="mb-1 flex items-center gap-2 text-base font-bold text-foreground">
-            <CreditCard className="h-5 w-5 text-primary" /> Métodos de pago
+            <CreditCard className="h-5 w-5 text-primary" /> {text.paymentMethods}
           </h3>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Elige cómo deseas pagar para confirmar tu reserva.
-          </p>
+          <p className="mb-3 text-xs text-muted-foreground">{text.choosePayment}</p>
 
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               onClick={() => setPaymentMode("partial")}
               className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "partial" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
             >
-              <p className="font-semibold text-foreground">Pago parcial (30%)</p>
-              <p className="text-xs text-muted-foreground">Confirma con el depósito y paga el resto en sitio.</p>
+              <p className="font-semibold text-foreground">{text.partialPayment}</p>
+              <p className="text-xs text-muted-foreground">{text.partialPaymentDesc}</p>
             </button>
             <button
               onClick={() => setPaymentMode("full")}
               className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "full" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
             >
-              <p className="font-semibold text-foreground">Pago completo (100%)</p>
-              <p className="text-xs text-muted-foreground">Cancela todo ahora, sin saldo pendiente.</p>
+              <p className="font-semibold text-foreground">{text.fullPayment}</p>
+              <p className="text-xs text-muted-foreground">{text.fullPaymentDesc}</p>
             </button>
           </div>
 
           <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Total reserva:</span><strong className="text-foreground">{formatCOP(lastTotal)}</strong></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{text.totalReservation}:</span><strong className="text-foreground">{formatCOP(lastTotal)}</strong></div>
             {paymentMode === "partial" ? (
               <>
-                <div className="flex justify-between"><span className="text-primary">Pago parcial (30%):</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
-                <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
+                <div className="flex justify-between"><span className="text-primary">{text.partialPayment}:</span><strong className="text-primary">{formatCOP(lastDeposit)}</strong></div>
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground">{text.balanceAtSite}:</span><span className="text-muted-foreground">{formatCOP(lastTotal - lastDeposit)}</span></div>
               </>
             ) : (
               <>
-                <div className="flex justify-between"><span className="text-primary">A pagar ahora (100%):</span><strong className="text-primary">{formatCOP(lastTotal)}</strong></div>
-                <div className="flex justify-between text-xs"><span className="text-muted-foreground">Saldo en sitio:</span><span className="text-muted-foreground">$0</span></div>
+                <div className="flex justify-between"><span className="text-primary">{text.payNow} (100%):</span><strong className="text-primary">{formatCOP(lastTotal)}</strong></div>
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground">{text.balanceAtSite}:</span><span className="text-muted-foreground">$0</span></div>
               </>
             )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {[
-              { name: "Nequi", icon: <Smartphone className="h-4 w-4" />, num: "300 123 4567", color: "border-pink-500/40 bg-pink-500/5" },
-              { name: "Daviplata", icon: <Smartphone className="h-4 w-4" />, num: "301 234 5678", color: "border-red-500/40 bg-red-500/5" },
-              { name: "Bancolombia", icon: <Building2 className="h-4 w-4" />, num: "Ahorros 123-456789-00", color: "border-yellow-500/40 bg-yellow-500/5" },
-              { name: "PSE", icon: <CreditCard className="h-4 w-4" />, num: "Banco / cuenta vinculada", color: "border-blue-500/40 bg-blue-500/5" },
-            ].map((m) => (
+            {methods.map((m) => (
               <div key={m.name} className={`rounded-lg border p-3 ${m.color}`}>
-                <div className="mb-1 flex items-center justify-between">
+                <div className="mb-1 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">{m.icon} {m.name}</div>
                   <button onClick={() => copyToClipboard(m.num)} className="text-xs text-primary hover:underline flex items-center gap-1">
-                    <Copy className="h-3 w-3" /> Copiar
+                    <Copy className="h-3 w-3" /> {text.copy}
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground break-words">{m.num}</p>
-                <p className="mt-1 text-[11px] text-muted-foreground">Monto: <strong className="text-foreground">{formatCOP(paymentMode === "partial" ? lastDeposit : lastTotal)}</strong></p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{text.amountLabel}: <strong className="text-foreground">{formatCOP(paymentMode === "partial" ? lastDeposit : lastTotal)}</strong></p>
+                <a
+                  href={m.url} target="_blank" rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                >
+                  <ExternalLink className="h-3 w-3" /> {text.payOnlineLink}
+                </a>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Una vez realices el pago, envía el comprobante por WhatsApp o al correo de contacto. Tu reserva quedará confirmada al validarlo.
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">{text.paymentInstructions}</p>
         </div>
 
         <button onClick={() => { setSent(false); setTel(""); setFecha(""); setNota(""); setExtras([]); }} className="w-full rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">{text.makeAnother}</button>
