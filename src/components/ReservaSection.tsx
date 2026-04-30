@@ -522,16 +522,16 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           const varies = new Set(bd.perHour.map(p => p.price)).size > 1;
           return (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-              <p className="mb-1 font-semibold text-foreground">Resumen de pago</p>
+              <p className="mb-1 font-semibold text-foreground">{text.paymentSummary}</p>
               <ul className="mb-1 space-y-0.5 text-xs text-muted-foreground">
                 {bd.perHour.map((p, i) => (
                   <li key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></li>
                 ))}
               </ul>
-              {varies && <p className="text-[11px] text-primary">⚡ La tarifa varía por franja horaria.</p>}
-              <p className="text-foreground">Total: <strong>{formatCOP(bd.total)}</strong></p>
-              <p className="text-primary">Pago parcial requerido (30%): <strong>{formatCOP(dep)}</strong></p>
-              <p className="text-xs text-muted-foreground">Saldo restante en sitio: {formatCOP(bd.total - dep)}</p>
+              {varies && <p className="text-[11px] text-primary">{text.variesByHour}</p>}
+              <p className="text-foreground">{text.totalLabel}: <strong>{formatCOP(bd.total)}</strong></p>
+              <p className="text-primary">{text.partialPaymentRequired}: <strong>{formatCOP(dep)}</strong></p>
+              <p className="text-xs text-muted-foreground">{text.remainingAtSite}: {formatCOP(bd.total - dep)}</p>
             </div>
           );
         })()}
