@@ -148,6 +148,9 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
       <div className="mb-5">
         <h2 className="flex items-center gap-2 text-xl font-bold text-foreground"><ClipboardList className="h-5 w-5 text-primary" /> {text.myReservationsTitle}</h2>
         <p className="text-sm text-muted-foreground">{text.myReservationsDesc}</p>
+        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <strong>{text.cancellationPolicyTitle}:</strong> {text.cancellationPolicyDesc}
+        </div>
       </div>
 
       {loading ? (
