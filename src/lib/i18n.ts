@@ -195,6 +195,14 @@ export type Translation = {
   legendAllBusy: string;
   legendPast: string;
   noHoursAvailable: string;
+  courtScheduleLabel: string;
+  courtClosedDay: string;
+  legendClosedDay: string;
+  outsideHoursLabel: string;
+  cancellationPolicyTitle: string;
+  cancellationPolicyDesc: string;
+  cancellationLocked: string;
+  hoursUntilLabel: string;
 
   // Soporte section
   supportContact: string;
