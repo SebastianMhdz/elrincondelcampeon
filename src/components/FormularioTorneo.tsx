@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { createTournament } from "@/lib/torneos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Cancha } from "@/data/canchas";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { parseHours, isDayOpen } from "@/lib/horarios-cancha";
 
 interface Props {
   user: User;
