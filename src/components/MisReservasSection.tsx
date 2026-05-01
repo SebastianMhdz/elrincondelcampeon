@@ -84,8 +84,8 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
     if (!toDelete) return;
     if (hoursUntil(toDelete) < 24) {
       toast({
-        title: "No se puede cancelar",
-        description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+        title: text.cancellationLocked,
+        description: text.cancellationPolicyDesc,
         variant: "destructive",
       });
       setToDelete(null);
