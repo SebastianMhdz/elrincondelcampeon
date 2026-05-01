@@ -524,14 +524,30 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div><label className={labelClass}>{text.hour}</label><select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>{horas.map(h => <option key={h} disabled={occupiedHourLabels.has(h)}>{h}{occupiedHourLabels.has(h) ? ` · ${text.occupied}` : ""}</option>)}</select></div>
+          <div>
+            <label className={labelClass}>{text.hour}</label>
+            <select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>
+              {horas.map(h => {
+                const mins = hourLabelToMinutes(h);
+                const selDate = fecha ? new Date(`${fecha}T00:00:00`) : null;
+                const inSch = selDate ? isOpenAt(schedule, selDate, mins) : true;
+                const occ = occupiedHourLabels.has(h);
+                const dis = occ || !inSch;
+                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : "";
+                return <option key={h} value={h} disabled={dis}>{h}{suffix}</option>;
+              })}
+            </select>
+          </div>
           <div><label className={labelClass}>{text.duration}</label><select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={inputClass}><option value="1">{text.hour1}</option><option value="2">{text.hour2}</option><option value="3">{text.hour3}</option></select></div>
         </div>
         <div>
           <label className={labelClass}>{text.modality}</label>
           <select value={jugadores} onChange={(e) => setJugadores(e.target.value)} className={inputClass}>
-            <option>Fútbol 5 (10 jug.)</option><option>Fútbol 6 (12 jug.)</option><option>Fútbol 7 (14 jug.)</option><option>Fútbol 8 (16 jug.)</option>
+            {modalidades.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
+          {selectedCancha?.tipo && (
+            <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>{text.extraServices}</label>
