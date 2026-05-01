@@ -430,17 +430,22 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
             <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
               {weekDays.map((d, i) => <div key={i}>{d}</div>)}
             </div>
+            {selectedCancha?.hours && (
+              <p className="mb-2 text-[11px] text-muted-foreground"><strong className="text-foreground">{text.courtScheduleLabel}:</strong> {selectedCancha.hours}</p>
+            )}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((cell, idx) => {
                 if (!cell.date) return <div key={idx} />;
                 const key = fmtDay(cell.date);
                 const isPast = cell.date < today0;
+                const dayOpen = isDayOpen(schedule, cell.date);
                 const occ = dayStatuses.get(key)?.occupied ?? 0;
                 const allBusy = occ >= totalSlotsPerDay;
                 const someBusy = occ > 0 && !allBusy;
                 const selected = fecha === key;
                 let cls = "border-border bg-card text-foreground hover:bg-accent";
                 if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
+                else if (!dayOpen) cls = "border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,hsl(var(--muted-foreground)/0.15)_3px,hsl(var(--muted-foreground)/0.15)_5px)]";
                 else if (allBusy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
                 else if (someBusy) cls = "border-orange-500/50 bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25";
                 else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
@@ -448,9 +453,10 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 return (
                   <button
                     key={idx} type="button"
-                    disabled={isPast || allBusy}
+                    disabled={isPast || allBusy || !dayOpen}
                     onClick={() => setFecha(key)}
                     className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
+                    title={!dayOpen ? text.courtClosedDay : undefined}
                   >
                     {cell.date.getDate()}
                   </button>
@@ -462,38 +468,48 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-orange-500/70 align-middle" />{text.legendSomeBusy}</li>
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-red-500/70 align-middle" />{text.legendAllBusy}</li>
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted align-middle" />{text.legendPast}</li>
+              <li className="sm:col-span-2"><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/30 align-middle" />{text.legendClosedDay}</li>
             </ul>
 
-            {fecha ? (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                  {horas.map((h) => {
-                    const isOcc = occupiedHourLabels.has(h);
-                    const isSel = hora === h && !isOcc;
-                    return (
-                      <button
-                        key={h} type="button"
-                        disabled={isOcc}
-                        onClick={() => !isOcc && setHora(h)}
-                        className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${
-                          isOcc
-                            ? "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed"
-                            : isSel
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
-                        }`}
-                      >
-                        {h} · {isOcc ? text.occupied : text.available}
-                      </button>
-                    );
-                  })}
+            {fecha ? (() => {
+              const selDate = new Date(`${fecha}T00:00:00`);
+              const dayOpen = isDayOpen(schedule, selDate);
+              if (!dayOpen) {
+                return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
+              }
+              return (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {horas.map((h) => {
+                      const isOcc = occupiedHourLabels.has(h);
+                      const mins = hourLabelToMinutes(h);
+                      const inSchedule = isOpenAt(schedule, selDate, mins);
+                      const isSel = hora === h && !isOcc && inSchedule;
+                      const disabled = isOcc || !inSchedule;
+                      let cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
+                      if (isSel) cls = "border-primary bg-primary text-primary-foreground";
+                      else if (isOcc) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                      else if (!inSchedule) cls = "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed";
+                      return (
+                        <button
+                          key={h} type="button"
+                          disabled={disabled}
+                          onClick={() => !disabled && setHora(h)}
+                          className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${cls}`}
+                          title={!inSchedule ? text.outsideHoursLabel : undefined}
+                        >
+                          {h} · {!inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : text.available}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h))) && (
+                    <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
+                  )}
                 </div>
-                {horas.every((h) => occupiedHourLabels.has(h)) && (
-                  <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
-                )}
-              </div>
-            ) : (
+              );
+            })() : (
               <p className="mt-3 text-xs text-muted-foreground">{text.pickDateToSeeHours}</p>
             )}
           </div>
