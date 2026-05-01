@@ -184,6 +184,46 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCancha?.id]);
 
+  // ---- Hooks de derivados de calendario (deben ir ANTES de cualquier early return) ----
+  const minutesToHourLabel = (m: number) => {
+    const hh24 = Math.floor(m / 60);
+    const ap = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = ((hh24 + 11) % 12) + 1;
+    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
+  };
+  const occupiedHourLabels = useMemo(() => {
+    const set = new Set<string>();
+    if (!fecha) return set;
+    for (const slot of busySlots) {
+      if (slot.reservation_date !== fecha) continue;
+      const [hh, mm] = slot.start_time.split(":").map(Number);
+      const start = hh * 60 + (mm || 0);
+      for (let i = 0; i < (slot.duration_hours || 1); i++) {
+        set.add(minutesToHourLabel(start + i * 60));
+      }
+    }
+    return set;
+  }, [fecha, busySlots]);
+  const dayStatuses = useMemo(() => {
+    const map = new Map<string, { occupied: number }>();
+    for (const slot of busySlots) {
+      const prev = map.get(slot.reservation_date) ?? { occupied: 0 };
+      prev.occupied += slot.duration_hours || 1;
+      map.set(slot.reservation_date, prev);
+    }
+    return map;
+  }, [busySlots]);
+  const calendarDays = useMemo(() => {
+    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const startWeekday = first.getDay();
+    const days: Array<{ date: Date | null }> = [];
+    for (let i = 0; i < startWeekday; i++) days.push({ date: null });
+    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
+    while (days.length % 7 !== 0) days.push({ date: null });
+    return days;
+  }, [calendarMonth]);
+
   if (!user) {
     return (
       <div className="section-sport-panel rounded-[22px] p-8 text-center">
