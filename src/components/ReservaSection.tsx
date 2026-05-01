@@ -206,6 +206,18 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
       return;
     }
+    // Validar horario de la cancha
+    const selDate = new Date(`${fecha}T00:00:00`);
+    const dur = Number(duracion) || 1;
+    const startMin = hourLabelToMinutes(hora);
+    let withinSchedule = true;
+    for (let i = 0; i < dur; i++) {
+      if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
+    }
+    if (!withinSchedule) {
+      toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
+      return;
+    }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
     const cancha = canchas.find((item) => item.id === canchaDb?.legacy_id) ?? canchas.find((item) => item.id === Number(canchaId)) ?? fallbackCanchas[0];
     setSending(true);
