@@ -166,6 +166,24 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     return () => { active = false; };
   }, [canchaId, dbCanchas, calendarMonth]);
 
+  // Cancha seleccionada (objeto Cancha completo) y derivados (horario y modalidades)
+  const selectedCancha = useMemo(() => {
+    const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+    if (cdb) return canchas.find((c) => c.id === cdb.legacy_id) ?? null;
+    return canchas.find((c) => String(c.id) === canchaId) ?? null;
+  }, [canchaId, canchas, dbCanchas]);
+
+  const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
+  const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
+
+  // Cuando cambia la cancha, ajustar la modalidad por defecto si la actual no aplica.
+  useEffect(() => {
+    if (modalidades.length && !modalidades.includes(jugadores)) {
+      setJugadores(modalidades[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCancha?.id]);
+
   if (!user) {
     return (
       <div className="section-sport-panel rounded-[22px] p-8 text-center">
