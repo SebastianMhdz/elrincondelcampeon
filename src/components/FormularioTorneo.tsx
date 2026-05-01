@@ -167,15 +167,67 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Detalles, reglas, premios especiales..." maxLength={500} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Fecha inicio *</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div>
-              <Label>Fecha fin *</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
+          <div>
+            <Label>Fechas del torneo *</Label>
+            {!legacyId ? (
+              <p className="rounded-lg border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">Selecciona primero la cancha para ver disponibilidad.</p>
+            ) : (
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))} className="rounded-md border border-border bg-card p-1.5 text-foreground hover:bg-accent">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <p className="text-sm font-semibold capitalize text-foreground">{monthLabel}</p>
+                  <button type="button" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))} className="rounded-md border border-border bg-card p-1.5 text-foreground hover:bg-accent">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
+                  {weekDays.map((d, i) => <div key={i}>{d}</div>)}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarDays.map((cell, idx) => {
+                    if (!cell.date) return <div key={idx} />;
+                    const key = fmtDay(cell.date);
+                    const isPast = cell.date < today0;
+                    const dayOpen = isDayOpen(schedule, cell.date);
+                    const busy = busyDays.has(key);
+                    const isStart = key === startDate;
+                    const isEnd = key === endDate;
+                    const isInRange = inRange(key);
+                    let cls = "border-border bg-card text-foreground hover:bg-accent";
+                    if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
+                    else if (!dayOpen) cls = "border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,hsl(var(--muted-foreground)/0.15)_3px,hsl(var(--muted-foreground)/0.15)_5px)]";
+                    else if (busy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                    else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
+                    if (isStart || isEnd) cls += " ring-2 ring-primary";
+                    if (isInRange && !isStart && !isEnd) cls += " ring-1 ring-primary/40 bg-primary/10";
+                    return (
+                      <button
+                        key={idx} type="button"
+                        disabled={isPast || busy || !dayOpen}
+                        onClick={() => handleDayClick(key)}
+                        className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
+                        title={busy ? "Día con reserva confirmada" : !dayOpen ? "Cancha cerrada" : undefined}
+                      >
+                        {cell.date.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+                <ul className="mt-3 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                  <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/70 align-middle" />Disponible</li>
+                  <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-red-500/70 align-middle" />Día con reserva confirmada</li>
+                  <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted align-middle" />Día pasado</li>
+                  <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/30 align-middle" />Cancha cerrada</li>
+                </ul>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {startDate && !endDate && <>Inicio: <strong className="text-foreground">{startDate}</strong> · selecciona el día final.</>}
+                  {startDate && endDate && <>Del <strong className="text-foreground">{startDate}</strong> al <strong className="text-foreground">{endDate}</strong>.</>}
+                  {!startDate && <>Toca un día para marcar el inicio del torneo.</>}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
