@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
 import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
+import { parseHours, parseModalidades, isOpenAt, isDayOpen, type Rango } from "@/lib/horarios-cancha";
 
 interface ReservaSectionProps {
   initialCancha?: Cancha | null;
