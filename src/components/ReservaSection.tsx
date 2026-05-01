@@ -243,7 +243,6 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       setSending(false); return;
     }
 
-    const dur = Number(duracion) || 1;
     const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
     const totalPrice = breakdown.total;
     const avgPerHour = dur > 0 ? Math.round(totalPrice / dur) : totalPrice;
