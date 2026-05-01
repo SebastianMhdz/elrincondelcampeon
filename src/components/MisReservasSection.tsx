@@ -84,8 +84,8 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
     if (!toDelete) return;
     if (hoursUntil(toDelete) < 24) {
       toast({
-        title: "No se puede cancelar",
-        description: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación.",
+        title: text.cancellationLocked,
+        description: text.cancellationPolicyDesc,
         variant: "destructive",
       });
       setToDelete(null);
@@ -148,6 +148,9 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
       <div className="mb-5">
         <h2 className="flex items-center gap-2 text-xl font-bold text-foreground"><ClipboardList className="h-5 w-5 text-primary" /> {text.myReservationsTitle}</h2>
         <p className="text-sm text-muted-foreground">{text.myReservationsDesc}</p>
+        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <strong>{text.cancellationPolicyTitle}:</strong> {text.cancellationPolicyDesc}
+        </div>
       </div>
 
       {loading ? (
@@ -167,14 +170,20 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusColor(r.status)}`}>{statusLabel(r.status)}</span>
-                  <button
-                    onClick={() => setToDelete(r)}
-                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-1.5 text-destructive transition hover:bg-destructive/20"
-                    title="Eliminar reserva"
-                    aria-label="Eliminar reserva"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {(() => {
+                    const locked = hoursUntil(r) < 24;
+                    return (
+                      <button
+                        onClick={() => setToDelete(r)}
+                        disabled={locked}
+                        className={`rounded-lg border p-1.5 transition ${locked ? "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed" : "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"}`}
+                        title={locked ? text.cancellationLocked : "Eliminar reserva"}
+                        aria-label={locked ? text.cancellationLocked : "Eliminar reserva"}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">

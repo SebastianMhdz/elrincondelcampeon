@@ -195,6 +195,14 @@ export type Translation = {
   legendAllBusy: string;
   legendPast: string;
   noHoursAvailable: string;
+  courtScheduleLabel: string;
+  courtClosedDay: string;
+  legendClosedDay: string;
+  outsideHoursLabel: string;
+  cancellationPolicyTitle: string;
+  cancellationPolicyDesc: string;
+  cancellationLocked: string;
+  hoursUntilLabel: string;
 
   // Soporte section
   supportContact: string;
@@ -647,6 +655,14 @@ export const translations: Record<Locale, Translation> = {
     legendAllBusy: "Rojo: día sin disponibilidad",
     legendPast: "Gris: día pasado, no reservable",
     noHoursAvailable: "No hay horas disponibles este día.",
+    courtScheduleLabel: "Horario de la cancha",
+    courtClosedDay: "La cancha está cerrada este día.",
+    legendClosedDay: "Rayado: cancha cerrada ese día",
+    outsideHoursLabel: "Fuera del horario de la cancha",
+    cancellationPolicyTitle: "Política de cancelación",
+    cancellationPolicyDesc: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación. Esto evita cancelaciones de último minuto que afectan al establecimiento.",
+    cancellationLocked: "No se puede cancelar (menos de 24h)",
+    hoursUntilLabel: "horas hasta la reserva",
   },
   en: {
     appName: "Champion's Corner",
@@ -805,6 +821,14 @@ export const translations: Record<Locale, Translation> = {
     legendAllBusy: "Red: day with no availability",
     legendPast: "Gray: past day, not bookable",
     noHoursAvailable: "No hours available on this day.",
+    courtScheduleLabel: "Court schedule",
+    courtClosedDay: "The court is closed on this day.",
+    legendClosedDay: "Striped: court closed that day",
+    outsideHoursLabel: "Outside opening hours",
+    cancellationPolicyTitle: "Cancellation policy",
+    cancellationPolicyDesc: "Bookings can only be cancelled at least 24 hours in advance.",
+    cancellationLocked: "Not cancellable (less than 24h)",
+    hoursUntilLabel: "hours until booking",
   },
   pt: {
     appName: "O Canto do Campeão",
@@ -963,6 +987,14 @@ export const translations: Record<Locale, Translation> = {
     legendAllBusy: "Vermelho: dia sem disponibilidade",
     legendPast: "Cinza: dia passado, não reservável",
     noHoursAvailable: "Não há horários disponíveis neste dia.",
+    courtScheduleLabel: "Horário do campo",
+    courtClosedDay: "O campo está fechado neste dia.",
+    legendClosedDay: "Listrado: campo fechado nesse dia",
+    outsideHoursLabel: "Fora do horário",
+    cancellationPolicyTitle: "Política de cancelamento",
+    cancellationPolicyDesc: "As reservas só podem ser canceladas com pelo menos 24 horas de antecedência.",
+    cancellationLocked: "Não cancelável (menos de 24h)",
+    hoursUntilLabel: "horas até a reserva",
   },
   de: {
     appName: "Ecke des Champions",
@@ -1121,5 +1153,13 @@ export const translations: Record<Locale, Translation> = {
     legendAllBusy: "Rot: Tag ohne Verfügbarkeit",
     legendPast: "Grau: vergangener Tag, nicht buchbar",
     noHoursAvailable: "Keine Stunden an diesem Tag verfügbar.",
+    courtScheduleLabel: "Öffnungszeiten des Platzes",
+    courtClosedDay: "Der Platz ist an diesem Tag geschlossen.",
+    legendClosedDay: "Schraffiert: Platz an diesem Tag geschlossen",
+    outsideHoursLabel: "Außerhalb der Öffnungszeiten",
+    cancellationPolicyTitle: "Stornierungsbedingungen",
+    cancellationPolicyDesc: "Buchungen können nur mit mindestens 24 Stunden Vorlauf storniert werden.",
+    cancellationLocked: "Nicht stornierbar (weniger als 24 Std.)",
+    hoursUntilLabel: "Std. bis zur Buchung",
   },
 };

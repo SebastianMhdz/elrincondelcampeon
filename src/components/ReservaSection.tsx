@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
 import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
+import { parseHours, parseModalidades, isOpenAt, isDayOpen, type Rango } from "@/lib/horarios-cancha";
 
 interface ReservaSectionProps {
   initialCancha?: Cancha | null;
@@ -165,6 +166,64 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     return () => { active = false; };
   }, [canchaId, dbCanchas, calendarMonth]);
 
+  // Cancha seleccionada (objeto Cancha completo) y derivados (horario y modalidades)
+  const selectedCancha = useMemo(() => {
+    const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
+    if (cdb) return canchas.find((c) => c.id === cdb.legacy_id) ?? null;
+    return canchas.find((c) => String(c.id) === canchaId) ?? null;
+  }, [canchaId, canchas, dbCanchas]);
+
+  const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
+  const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
+
+  // Cuando cambia la cancha, ajustar la modalidad por defecto si la actual no aplica.
+  useEffect(() => {
+    if (modalidades.length && !modalidades.includes(jugadores)) {
+      setJugadores(modalidades[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCancha?.id]);
+
+  // ---- Hooks de derivados de calendario (deben ir ANTES de cualquier early return) ----
+  const minutesToHourLabel = (m: number) => {
+    const hh24 = Math.floor(m / 60);
+    const ap = hh24 >= 12 ? "PM" : "AM";
+    const hh12 = ((hh24 + 11) % 12) + 1;
+    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
+  };
+  const occupiedHourLabels = useMemo(() => {
+    const set = new Set<string>();
+    if (!fecha) return set;
+    for (const slot of busySlots) {
+      if (slot.reservation_date !== fecha) continue;
+      const [hh, mm] = slot.start_time.split(":").map(Number);
+      const start = hh * 60 + (mm || 0);
+      for (let i = 0; i < (slot.duration_hours || 1); i++) {
+        set.add(minutesToHourLabel(start + i * 60));
+      }
+    }
+    return set;
+  }, [fecha, busySlots]);
+  const dayStatuses = useMemo(() => {
+    const map = new Map<string, { occupied: number }>();
+    for (const slot of busySlots) {
+      const prev = map.get(slot.reservation_date) ?? { occupied: 0 };
+      prev.occupied += slot.duration_hours || 1;
+      map.set(slot.reservation_date, prev);
+    }
+    return map;
+  }, [busySlots]);
+  const calendarDays = useMemo(() => {
+    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const startWeekday = first.getDay();
+    const days: Array<{ date: Date | null }> = [];
+    for (let i = 0; i < startWeekday; i++) days.push({ date: null });
+    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
+    while (days.length % 7 !== 0) days.push({ date: null });
+    return days;
+  }, [calendarMonth]);
+
   if (!user) {
     return (
       <div className="section-sport-panel rounded-[22px] p-8 text-center">
@@ -185,6 +244,18 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
     if (fecha < todayISO()) {
       toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
+      return;
+    }
+    // Validar horario de la cancha
+    const selDate = new Date(`${fecha}T00:00:00`);
+    const dur = Number(duracion) || 1;
+    const startMin = hourLabelToMinutes(hora);
+    let withinSchedule = true;
+    for (let i = 0; i < dur; i++) {
+      if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
+    }
+    if (!withinSchedule) {
+      toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
       return;
     }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
@@ -212,7 +283,6 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       setSending(false); return;
     }
 
-    const dur = Number(duracion) || 1;
     const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
     const totalPrice = breakdown.total;
     const avgPerHour = dur > 0 ? Math.round(totalPrice / dur) : totalPrice;
@@ -332,53 +402,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const inputClass = "w-full rounded-lg border border-border bg-card p-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
   const labelClass = "mb-1.5 block text-sm font-medium text-muted-foreground";
 
-  // Compute set of occupied hour-labels for selected date based on busySlots
-  const minutesToHourLabel = (m: number) => {
-    const hh24 = Math.floor(m / 60);
-    const ap = hh24 >= 12 ? "PM" : "AM";
-    const hh12 = ((hh24 + 11) % 12) + 1;
-    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
-  };
-  const occupiedHourLabels = useMemo(() => {
-    const set = new Set<string>();
-    if (!fecha) return set;
-    for (const slot of busySlots) {
-      if (slot.reservation_date !== fecha) continue;
-      const [hh, mm] = slot.start_time.split(":").map(Number);
-      const start = hh * 60 + (mm || 0);
-      for (let i = 0; i < (slot.duration_hours || 1); i++) {
-        set.add(minutesToHourLabel(start + i * 60));
-      }
-    }
-    return set;
-  }, [fecha, busySlots]);
-
-  // Day-status map for visible month (key = "YYYY-MM-DD")
-  const dayStatuses = useMemo(() => {
-    const map = new Map<string, { occupied: number }>();
-    for (const slot of busySlots) {
-      const prev = map.get(slot.reservation_date) ?? { occupied: 0 };
-      prev.occupied += slot.duration_hours || 1;
-      map.set(slot.reservation_date, prev);
-    }
-    return map;
-  }, [busySlots]);
-
   const totalSlotsPerDay = horas.length;
   const fmtDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today0 = new Date(); today0.setHours(0, 0, 0, 0);
-
-  // Build calendar grid (weeks)
-  const calendarDays = useMemo(() => {
-    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
-    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
-    const startWeekday = first.getDay(); // 0 Sun .. 6 Sat
-    const days: Array<{ date: Date | null }> = [];
-    for (let i = 0; i < startWeekday; i++) days.push({ date: null });
-    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
-    while (days.length % 7 !== 0) days.push({ date: null });
-    return days;
-  }, [calendarMonth]);
 
   const monthLabel = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
@@ -411,17 +437,22 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
             <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-muted-foreground">
               {weekDays.map((d, i) => <div key={i}>{d}</div>)}
             </div>
+            {selectedCancha?.hours && (
+              <p className="mb-2 text-[11px] text-muted-foreground"><strong className="text-foreground">{text.courtScheduleLabel}:</strong> {selectedCancha.hours}</p>
+            )}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((cell, idx) => {
                 if (!cell.date) return <div key={idx} />;
                 const key = fmtDay(cell.date);
                 const isPast = cell.date < today0;
+                const dayOpen = isDayOpen(schedule, cell.date);
                 const occ = dayStatuses.get(key)?.occupied ?? 0;
                 const allBusy = occ >= totalSlotsPerDay;
                 const someBusy = occ > 0 && !allBusy;
                 const selected = fecha === key;
                 let cls = "border-border bg-card text-foreground hover:bg-accent";
                 if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
+                else if (!dayOpen) cls = "border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,hsl(var(--muted-foreground)/0.15)_3px,hsl(var(--muted-foreground)/0.15)_5px)]";
                 else if (allBusy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
                 else if (someBusy) cls = "border-orange-500/50 bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25";
                 else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
@@ -429,9 +460,10 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 return (
                   <button
                     key={idx} type="button"
-                    disabled={isPast || allBusy}
+                    disabled={isPast || allBusy || !dayOpen}
                     onClick={() => setFecha(key)}
                     className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
+                    title={!dayOpen ? text.courtClosedDay : undefined}
                   >
                     {cell.date.getDate()}
                   </button>
@@ -443,38 +475,48 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-orange-500/70 align-middle" />{text.legendSomeBusy}</li>
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-red-500/70 align-middle" />{text.legendAllBusy}</li>
               <li><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted align-middle" />{text.legendPast}</li>
+              <li className="sm:col-span-2"><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/30 align-middle" />{text.legendClosedDay}</li>
             </ul>
 
-            {fecha ? (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                  {horas.map((h) => {
-                    const isOcc = occupiedHourLabels.has(h);
-                    const isSel = hora === h && !isOcc;
-                    return (
-                      <button
-                        key={h} type="button"
-                        disabled={isOcc}
-                        onClick={() => !isOcc && setHora(h)}
-                        className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${
-                          isOcc
-                            ? "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed"
-                            : isSel
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
-                        }`}
-                      >
-                        {h} · {isOcc ? text.occupied : text.available}
-                      </button>
-                    );
-                  })}
+            {fecha ? (() => {
+              const selDate = new Date(`${fecha}T00:00:00`);
+              const dayOpen = isDayOpen(schedule, selDate);
+              if (!dayOpen) {
+                return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
+              }
+              return (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                    {horas.map((h) => {
+                      const isOcc = occupiedHourLabels.has(h);
+                      const mins = hourLabelToMinutes(h);
+                      const inSchedule = isOpenAt(schedule, selDate, mins);
+                      const isSel = hora === h && !isOcc && inSchedule;
+                      const disabled = isOcc || !inSchedule;
+                      let cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
+                      if (isSel) cls = "border-primary bg-primary text-primary-foreground";
+                      else if (isOcc) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                      else if (!inSchedule) cls = "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed";
+                      return (
+                        <button
+                          key={h} type="button"
+                          disabled={disabled}
+                          onClick={() => !disabled && setHora(h)}
+                          className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${cls}`}
+                          title={!inSchedule ? text.outsideHoursLabel : undefined}
+                        >
+                          {h} · {!inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : text.available}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h))) && (
+                    <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
+                  )}
                 </div>
-                {horas.every((h) => occupiedHourLabels.has(h)) && (
-                  <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
-                )}
-              </div>
-            ) : (
+              );
+            })() : (
               <p className="mt-3 text-xs text-muted-foreground">{text.pickDateToSeeHours}</p>
             )}
           </div>
@@ -489,14 +531,30 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div><label className={labelClass}>{text.hour}</label><select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>{horas.map(h => <option key={h} disabled={occupiedHourLabels.has(h)}>{h}{occupiedHourLabels.has(h) ? ` · ${text.occupied}` : ""}</option>)}</select></div>
+          <div>
+            <label className={labelClass}>{text.hour}</label>
+            <select value={hora} onChange={(e) => setHora(e.target.value)} className={inputClass}>
+              {horas.map(h => {
+                const mins = hourLabelToMinutes(h);
+                const selDate = fecha ? new Date(`${fecha}T00:00:00`) : null;
+                const inSch = selDate ? isOpenAt(schedule, selDate, mins) : true;
+                const occ = occupiedHourLabels.has(h);
+                const dis = occ || !inSch;
+                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : "";
+                return <option key={h} value={h} disabled={dis}>{h}{suffix}</option>;
+              })}
+            </select>
+          </div>
           <div><label className={labelClass}>{text.duration}</label><select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={inputClass}><option value="1">{text.hour1}</option><option value="2">{text.hour2}</option><option value="3">{text.hour3}</option></select></div>
         </div>
         <div>
           <label className={labelClass}>{text.modality}</label>
           <select value={jugadores} onChange={(e) => setJugadores(e.target.value)} className={inputClass}>
-            <option>Fútbol 5 (10 jug.)</option><option>Fútbol 6 (12 jug.)</option><option>Fútbol 7 (14 jug.)</option><option>Fútbol 8 (16 jug.)</option>
+            {modalidades.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
+          {selectedCancha?.tipo && (
+            <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>{text.extraServices}</label>
