@@ -402,53 +402,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const inputClass = "w-full rounded-lg border border-border bg-card p-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30";
   const labelClass = "mb-1.5 block text-sm font-medium text-muted-foreground";
 
-  // Compute set of occupied hour-labels for selected date based on busySlots
-  const minutesToHourLabel = (m: number) => {
-    const hh24 = Math.floor(m / 60);
-    const ap = hh24 >= 12 ? "PM" : "AM";
-    const hh12 = ((hh24 + 11) % 12) + 1;
-    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
-  };
-  const occupiedHourLabels = useMemo(() => {
-    const set = new Set<string>();
-    if (!fecha) return set;
-    for (const slot of busySlots) {
-      if (slot.reservation_date !== fecha) continue;
-      const [hh, mm] = slot.start_time.split(":").map(Number);
-      const start = hh * 60 + (mm || 0);
-      for (let i = 0; i < (slot.duration_hours || 1); i++) {
-        set.add(minutesToHourLabel(start + i * 60));
-      }
-    }
-    return set;
-  }, [fecha, busySlots]);
-
-  // Day-status map for visible month (key = "YYYY-MM-DD")
-  const dayStatuses = useMemo(() => {
-    const map = new Map<string, { occupied: number }>();
-    for (const slot of busySlots) {
-      const prev = map.get(slot.reservation_date) ?? { occupied: 0 };
-      prev.occupied += slot.duration_hours || 1;
-      map.set(slot.reservation_date, prev);
-    }
-    return map;
-  }, [busySlots]);
-
   const totalSlotsPerDay = horas.length;
   const fmtDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today0 = new Date(); today0.setHours(0, 0, 0, 0);
-
-  // Build calendar grid (weeks)
-  const calendarDays = useMemo(() => {
-    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
-    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
-    const startWeekday = first.getDay(); // 0 Sun .. 6 Sat
-    const days: Array<{ date: Date | null }> = [];
-    for (let i = 0; i < startWeekday; i++) days.push({ date: null });
-    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
-    while (days.length % 7 !== 0) days.push({ date: null });
-    return days;
-  }, [calendarMonth]);
 
   const monthLabel = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
