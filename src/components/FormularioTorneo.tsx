@@ -36,6 +36,61 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
   const [contactPhone, setContactPhone] = useState("");
   const [signupsOpen, setSignupsOpen] = useState(true);
 
+  // ----- Calendario de disponibilidad (mismo patrón que ReservaSection) -----
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); return d; });
+  const [busySlots, setBusySlots] = useState<Array<{ reservation_date: string }>>([]);
+
+  const selectedCancha = useMemo(() => canchas.find(c => String(c.id) === legacyId) ?? null, [canchas, legacyId]);
+  const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
+
+  useEffect(() => {
+    if (!legacyId) { setBusySlots([]); return; }
+    let active = true;
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const from = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const to = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    (async () => {
+      const { data: c } = await supabase.from("canchas").select("id").eq("legacy_id", Number(legacyId)).maybeSingle();
+      if (!c?.id || !active) return;
+      const { data } = await supabase.rpc("get_cancha_busy_slots", { _cancha_id: c.id, _from: fmt(from), _to: fmt(to) });
+      if (active) setBusySlots(((data as any[]) ?? []).map(r => ({ reservation_date: r.reservation_date })));
+    })();
+    return () => { active = false; };
+  }, [legacyId, calendarMonth]);
+
+  const fmtDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today0 = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+
+  const busyDays = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of busySlots) set.add(s.reservation_date);
+    return set;
+  }, [busySlots]);
+
+  const calendarDays = useMemo(() => {
+    const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+    const days: Array<{ date: Date | null }> = [];
+    for (let i = 0; i < first.getDay(); i++) days.push({ date: null });
+    for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), d) });
+    while (days.length % 7 !== 0) days.push({ date: null });
+    return days;
+  }, [calendarMonth]);
+
+  const handleDayClick = (key: string) => {
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(key); setEndDate("");
+    } else if (key < startDate) {
+      setStartDate(key);
+    } else {
+      setEndDate(key);
+    }
+  };
+
+  const inRange = (key: string) => startDate && endDate && key >= startDate && key <= endDate;
+  const monthLabel = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const weekDays = ["D", "L", "M", "M", "J", "V", "S"];
+
   const handleSubmit = async () => {
     if (!name.trim() || !legacyId || !startDate || !endDate) {
       toast({ title: "Faltan datos", description: "Nombre, cancha y fechas son obligatorios", variant: "destructive" });
