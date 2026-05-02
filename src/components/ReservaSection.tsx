@@ -501,26 +501,35 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                       const isOcc = occupiedHourLabels.has(h);
                       const mins = hourLabelToMinutes(h);
                       const inSchedule = isOpenAt(schedule, selDate, mins);
-                      const isSel = hora === h && !isOcc && inSchedule;
-                      const disabled = isOcc || !inSchedule;
+                      const tooSoon = isTodayISO(fecha) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+                      const isSel = hora === h && !isOcc && inSchedule && !tooSoon;
+                      const disabled = isOcc || !inSchedule || tooSoon;
                       let cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
                       if (isSel) cls = "border-primary bg-primary text-primary-foreground";
                       else if (isOcc) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                      else if (tooSoon) cls = "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 cursor-not-allowed";
                       else if (!inSchedule) cls = "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed";
+                      const label = !inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : tooSoon ? "< 2h" : text.available;
                       return (
                         <button
                           key={h} type="button"
                           disabled={disabled}
                           onClick={() => !disabled && setHora(h)}
                           className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${cls}`}
-                          title={!inSchedule ? text.outsideHoursLabel : undefined}
+                          title={tooSoon ? text.tooSoonToBook : !inSchedule ? text.outsideHoursLabel : undefined}
                         >
-                          {h} · {!inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : text.available}
+                          {h} · {label}
                         </button>
                       );
                     })}
                   </div>
-                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h))) && (
+                  {hora && !occupiedHourLabels.has(hora) && (
+                    <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                      <p className="text-xs font-semibold text-foreground">{text.selectedHoursPreview}:</p>
+                      <p className="text-sm text-primary font-bold">{fecha} · {hora} — {Number(duracion) || 1}h</p>
+                    </div>
+                  )}
+                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h)) || (isTodayISO(fecha) && hourLabelToMinutes(h) < nowMinutes() + MIN_ADVANCE_MINUTES)) && (
                     <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
                   )}
                 </div>
