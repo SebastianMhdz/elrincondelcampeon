@@ -245,9 +245,11 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
               <Select value={format} onValueChange={setFormat}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["Fútbol 5", "Fútbol 6", "Fútbol 7", "Fútbol 8", "Fútbol 11"].map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  {modalidades.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {selectedCancha?.tipo && <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>}
+            </div>
             </div>
             <div>
               <Label>Cupo de equipos</Label>
