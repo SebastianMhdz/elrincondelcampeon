@@ -104,6 +104,15 @@ const todayISO = () => {
   return `${y}-${m}-${day}`;
 };
 
+const nowMinutes = () => {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+};
+
+const isTodayISO = (dateStr: string) => dateStr === todayISO();
+
+const MIN_ADVANCE_MINUTES = 120; // 2 hours
+
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : "");
