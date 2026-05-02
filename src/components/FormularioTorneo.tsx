@@ -250,7 +250,6 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
               </Select>
               {selectedCancha?.tipo && <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>}
             </div>
-            </div>
             <div>
               <Label>Cupo de equipos</Label>
               <Input type="number" min={2} max={64} value={maxTeams} onChange={(e) => setMaxTeams(Number(e.target.value))} />
