@@ -557,8 +557,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 const selDate = fecha ? new Date(`${fecha}T00:00:00`) : null;
                 const inSch = selDate ? isOpenAt(schedule, selDate, mins) : true;
                 const occ = occupiedHourLabels.has(h);
-                const dis = occ || !inSch;
-                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : "";
+                const tooSoon = fecha && isTodayISO(fecha) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+                const dis = occ || !inSch || !!tooSoon;
+                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : tooSoon ? " · < 2h" : "";
                 return <option key={h} value={h} disabled={dis}>{h}{suffix}</option>;
               })}
             </select>
