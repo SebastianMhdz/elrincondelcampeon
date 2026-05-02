@@ -82,7 +82,7 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
 
   const handleDelete = async () => {
     if (!toDelete) return;
-    if (hoursUntil(toDelete) < 24) {
+    if (hoursUntil(toDelete) < 16) {
       toast({
         title: text.cancellationLocked,
         description: text.cancellationPolicyDesc,
