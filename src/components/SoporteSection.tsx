@@ -96,6 +96,18 @@ const SoporteSection = ({ text }: { text: Translation }) => {
           </select>
           <button onClick={abrirWA} className="w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90">{text.openWhatsapp}</button>
         </div>
+        <div className="rounded-xl border border-border bg-card p-5 text-center sm:col-span-2">
+          <MessageCircle className="mx-auto mb-2 h-8 w-8 text-accent" />
+          <h3 className="mb-1 text-sm font-semibold text-foreground">{text.whatsappDirectOwner}</h3>
+          <p className="mb-3 text-xs text-muted-foreground">{text.whatsappDirectOwnerDesc}</p>
+          <a
+            href="https://wa.me/57301479033?text=Hola!%20Necesito%20ayuda%20con%20El%20Rinc%C3%B3n%20Del%20Campe%C3%B3n."
+            target="_blank" rel="noopener noreferrer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+          >
+            {text.openWhatsapp} · +57 301 479 033
+          </a>
+        </div>
       </div>
       {sent ? (
         <div className="rounded-xl border border-accent/30 bg-accent/10 p-8 text-center">
