@@ -203,6 +203,19 @@ export type Translation = {
   cancellationPolicyDesc: string;
   cancellationLocked: string;
   hoursUntilLabel: string;
+  minAdvanceBooking: string;
+  minAdvanceBookingDesc: string;
+  tooSoonToBook: string;
+  selectedHoursPreview: string;
+  recurringReservation: string;
+  recurringWeekly: string;
+  recurringMonthly: string;
+  recurringReminder: string;
+  accountCreatedAt: string;
+  whatsappDirectOwner: string;
+  whatsappDirectOwnerDesc: string;
+  routeMapTitle: string;
+  routeMapDesc: string;
 
   // Soporte section
   supportContact: string;
