@@ -255,10 +255,15 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
       return;
     }
+    // Validate minimum 2 hours advance
+    const startMin = hourLabelToMinutes(hora);
+    if (isTodayISO(fecha) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
+      toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
+      return;
+    }
     // Validar horario de la cancha
     const selDate = new Date(`${fecha}T00:00:00`);
     const dur = Number(duracion) || 1;
-    const startMin = hourLabelToMinutes(hora);
     let withinSchedule = true;
     for (let i = 0; i < dur; i++) {
       if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
