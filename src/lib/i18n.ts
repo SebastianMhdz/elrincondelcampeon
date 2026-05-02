@@ -203,6 +203,19 @@ export type Translation = {
   cancellationPolicyDesc: string;
   cancellationLocked: string;
   hoursUntilLabel: string;
+  minAdvanceBooking: string;
+  minAdvanceBookingDesc: string;
+  tooSoonToBook: string;
+  selectedHoursPreview: string;
+  recurringReservation: string;
+  recurringWeekly: string;
+  recurringMonthly: string;
+  recurringReminder: string;
+  accountCreatedAt: string;
+  whatsappDirectOwner: string;
+  whatsappDirectOwnerDesc: string;
+  routeMapTitle: string;
+  routeMapDesc: string;
 
   // Soporte section
   supportContact: string;
@@ -660,9 +673,22 @@ export const translations: Record<Locale, Translation> = {
     legendClosedDay: "Rayado: cancha cerrada ese día",
     outsideHoursLabel: "Fuera del horario de la cancha",
     cancellationPolicyTitle: "Política de cancelación",
-    cancellationPolicyDesc: "Las reservas solo pueden cancelarse con al menos 24 horas de anticipación. Esto evita cancelaciones de último minuto que afectan al establecimiento.",
-    cancellationLocked: "No se puede cancelar (menos de 24h)",
+    cancellationPolicyDesc: "Las reservas solo pueden cancelarse con al menos 16 horas de anticipación. Esto evita cancelaciones de último minuto que afectan al establecimiento.",
+    cancellationLocked: "No se puede cancelar (menos de 16h)",
     hoursUntilLabel: "horas hasta la reserva",
+    minAdvanceBooking: "Reserva con mínimo 2 horas de anticipación",
+    minAdvanceBookingDesc: "Solo puedes reservar en horarios que sean al menos 2 horas posteriores a la hora actual, para que el personal de la cancha pueda prepararse.",
+    tooSoonToBook: "Este horario es menor a 2 horas desde ahora. Elige un horario posterior.",
+    selectedHoursPreview: "Horario seleccionado",
+    recurringReservation: "Reserva recurrente",
+    recurringWeekly: "Semanal",
+    recurringMonthly: "Mensual",
+    recurringReminder: "⚠️ Para reservas recurrentes, comunícate también con la cancha ya que implica mayor coordinación y tiempo.",
+    accountCreatedAt: "Cuenta creada el",
+    whatsappDirectOwner: "WhatsApp directo al equipo",
+    whatsappDirectOwnerDesc: "Escríbenos directo para una respuesta inmediata",
+    routeMapTitle: "Mapa de la ruta",
+    routeMapDesc: "Visualiza la ruta seleccionada en el mapa",
   },
   en: {
     appName: "Champion's Corner",
@@ -826,9 +852,22 @@ export const translations: Record<Locale, Translation> = {
     legendClosedDay: "Striped: court closed that day",
     outsideHoursLabel: "Outside opening hours",
     cancellationPolicyTitle: "Cancellation policy",
-    cancellationPolicyDesc: "Bookings can only be cancelled at least 24 hours in advance.",
-    cancellationLocked: "Not cancellable (less than 24h)",
+    cancellationPolicyDesc: "Bookings can only be cancelled at least 16 hours in advance.",
+    cancellationLocked: "Not cancellable (less than 16h)",
     hoursUntilLabel: "hours until booking",
+    minAdvanceBooking: "Book at least 2 hours in advance",
+    minAdvanceBookingDesc: "You can only book times that are at least 2 hours from now, so the staff can prepare the court.",
+    tooSoonToBook: "This time is less than 2 hours from now. Choose a later time.",
+    selectedHoursPreview: "Selected time",
+    recurringReservation: "Recurring booking",
+    recurringWeekly: "Weekly",
+    recurringMonthly: "Monthly",
+    recurringReminder: "⚠️ For recurring bookings, please also contact the court as it requires more coordination.",
+    accountCreatedAt: "Account created on",
+    whatsappDirectOwner: "WhatsApp team directly",
+    whatsappDirectOwnerDesc: "Message us directly for an immediate response",
+    routeMapTitle: "Route map",
+    routeMapDesc: "Visualize the selected route on the map",
   },
   pt: {
     appName: "O Canto do Campeão",
@@ -992,9 +1031,22 @@ export const translations: Record<Locale, Translation> = {
     legendClosedDay: "Listrado: campo fechado nesse dia",
     outsideHoursLabel: "Fora do horário",
     cancellationPolicyTitle: "Política de cancelamento",
-    cancellationPolicyDesc: "As reservas só podem ser canceladas com pelo menos 24 horas de antecedência.",
-    cancellationLocked: "Não cancelável (menos de 24h)",
+    cancellationPolicyDesc: "As reservas só podem ser canceladas com pelo menos 16 horas de antecedência.",
+    cancellationLocked: "Não cancelável (menos de 16h)",
     hoursUntilLabel: "horas até a reserva",
+    minAdvanceBooking: "Reserve com mínimo de 2 horas de antecedência",
+    minAdvanceBookingDesc: "Só é possível reservar horários que sejam pelo menos 2 horas a partir de agora.",
+    tooSoonToBook: "Este horário é menor que 2 horas a partir de agora. Escolha um horário posterior.",
+    selectedHoursPreview: "Horário selecionado",
+    recurringReservation: "Reserva recorrente",
+    recurringWeekly: "Semanal",
+    recurringMonthly: "Mensal",
+    recurringReminder: "⚠️ Para reservas recorrentes, entre em contato com o campo também.",
+    accountCreatedAt: "Conta criada em",
+    whatsappDirectOwner: "WhatsApp direto à equipe",
+    whatsappDirectOwnerDesc: "Escreva-nos diretamente para resposta imediata",
+    routeMapTitle: "Mapa da rota",
+    routeMapDesc: "Visualize a rota selecionada no mapa",
   },
   de: {
     appName: "Ecke des Champions",
@@ -1158,8 +1210,21 @@ export const translations: Record<Locale, Translation> = {
     legendClosedDay: "Schraffiert: Platz an diesem Tag geschlossen",
     outsideHoursLabel: "Außerhalb der Öffnungszeiten",
     cancellationPolicyTitle: "Stornierungsbedingungen",
-    cancellationPolicyDesc: "Buchungen können nur mit mindestens 24 Stunden Vorlauf storniert werden.",
-    cancellationLocked: "Nicht stornierbar (weniger als 24 Std.)",
+    cancellationPolicyDesc: "Buchungen können nur mit mindestens 16 Stunden Vorlauf storniert werden.",
+    cancellationLocked: "Nicht stornierbar (weniger als 16 Std.)",
     hoursUntilLabel: "Std. bis zur Buchung",
+    minAdvanceBooking: "Mindestens 2 Stunden im Voraus buchen",
+    minAdvanceBookingDesc: "Du kannst nur Zeiten buchen, die mindestens 2 Stunden in der Zukunft liegen.",
+    tooSoonToBook: "Diese Zeit liegt weniger als 2 Stunden in der Zukunft. Wähle eine spätere Zeit.",
+    selectedHoursPreview: "Ausgewählte Zeit",
+    recurringReservation: "Wiederkehrende Buchung",
+    recurringWeekly: "Wöchentlich",
+    recurringMonthly: "Monatlich",
+    recurringReminder: "⚠️ Für wiederkehrende Buchungen kontaktiere bitte auch den Platz.",
+    accountCreatedAt: "Konto erstellt am",
+    whatsappDirectOwner: "WhatsApp direkt ans Team",
+    whatsappDirectOwnerDesc: "Schreib uns direkt für eine sofortige Antwort",
+    routeMapTitle: "Routenkarte",
+    routeMapDesc: "Zeige die ausgewählte Route auf der Karte",
   },
 };

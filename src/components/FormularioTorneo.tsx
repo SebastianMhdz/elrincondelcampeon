@@ -12,7 +12,7 @@ import { createTournament } from "@/lib/torneos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Cancha } from "@/data/canchas";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { parseHours, isDayOpen } from "@/lib/horarios-cancha";
+import { parseHours, isDayOpen, parseModalidades } from "@/lib/horarios-cancha";
 
 interface Props {
   user: User;
@@ -42,6 +42,15 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
 
   const selectedCancha = useMemo(() => canchas.find(c => String(c.id) === legacyId) ?? null, [canchas, legacyId]);
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
+  const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
+
+  // Reset format when court changes and current format is not available
+  useEffect(() => {
+    if (modalidades.length && !modalidades.includes(format)) {
+      setFormat(modalidades[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCancha?.id]);
 
   useEffect(() => {
     if (!legacyId) { setBusySlots([]); return; }
@@ -236,9 +245,10 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
               <Select value={format} onValueChange={setFormat}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["Fútbol 5", "Fútbol 6", "Fútbol 7", "Fútbol 8", "Fútbol 11"].map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  {modalidades.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {selectedCancha?.tipo && <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>}
             </div>
             <div>
               <Label>Cupo de equipos</Label>

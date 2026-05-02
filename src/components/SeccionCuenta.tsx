@@ -74,6 +74,7 @@ const AccountSection = ({ text, user }: Props) => {
                 <h2 className="truncate text-xl font-bold text-foreground">{displayName}</h2>
                 <p className="truncate text-sm text-muted-foreground">{text.signedInAs}: {user.email}</p>
                 {profile?.country && <p className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground"><MapPin className="h-3 w-3 text-primary" /> {profile.country}</p>}
+                {user.created_at && <p className="mt-1 text-xs text-muted-foreground">{text.accountCreatedAt}: {new Date(user.created_at).toLocaleDateString()}</p>}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

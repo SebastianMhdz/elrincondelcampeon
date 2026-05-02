@@ -42,7 +42,7 @@ const AppSidebar = ({ active, onChange, locale, onLocaleChange, darkMode, onDark
   return (
     <aside
       onMouseEnter={() => { if (!isSettingsOpen()) setHovered(true); }}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { if (!isSettingsOpen()) setHovered(false); }}
       className={cn(
         "fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-sidebar-border bg-[linear-gradient(180deg,hsl(var(--sidebar-primary)),hsl(var(--sidebar-background)))] text-sidebar-foreground transition-[width] duration-300 md:flex md:flex-col",
         expanded ? "w-80" : "w-24"

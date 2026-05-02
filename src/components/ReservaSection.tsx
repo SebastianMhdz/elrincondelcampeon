@@ -104,6 +104,15 @@ const todayISO = () => {
   return `${y}-${m}-${day}`;
 };
 
+const nowMinutes = () => {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+};
+
+const isTodayISO = (dateStr: string) => dateStr === todayISO();
+
+const MIN_ADVANCE_MINUTES = 120; // 2 hours
+
 const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : "");
@@ -246,10 +255,15 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
       return;
     }
+    // Validate minimum 2 hours advance
+    const startMin = hourLabelToMinutes(hora);
+    if (isTodayISO(fecha) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
+      toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
+      return;
+    }
     // Validar horario de la cancha
     const selDate = new Date(`${fecha}T00:00:00`);
     const dur = Number(duracion) || 1;
-    const startMin = hourLabelToMinutes(hora);
     let withinSchedule = true;
     for (let i = 0; i < dur; i++) {
       if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
@@ -492,26 +506,35 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                       const isOcc = occupiedHourLabels.has(h);
                       const mins = hourLabelToMinutes(h);
                       const inSchedule = isOpenAt(schedule, selDate, mins);
-                      const isSel = hora === h && !isOcc && inSchedule;
-                      const disabled = isOcc || !inSchedule;
+                      const tooSoon = isTodayISO(fecha) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+                      const isSel = hora === h && !isOcc && inSchedule && !tooSoon;
+                      const disabled = isOcc || !inSchedule || tooSoon;
                       let cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
                       if (isSel) cls = "border-primary bg-primary text-primary-foreground";
                       else if (isOcc) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
+                      else if (tooSoon) cls = "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 cursor-not-allowed";
                       else if (!inSchedule) cls = "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed";
+                      const label = !inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : tooSoon ? "< 2h" : text.available;
                       return (
                         <button
                           key={h} type="button"
                           disabled={disabled}
                           onClick={() => !disabled && setHora(h)}
                           className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${cls}`}
-                          title={!inSchedule ? text.outsideHoursLabel : undefined}
+                          title={tooSoon ? text.tooSoonToBook : !inSchedule ? text.outsideHoursLabel : undefined}
                         >
-                          {h} · {!inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : text.available}
+                          {h} · {label}
                         </button>
                       );
                     })}
                   </div>
-                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h))) && (
+                  {hora && !occupiedHourLabels.has(hora) && (
+                    <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                      <p className="text-xs font-semibold text-foreground">{text.selectedHoursPreview}:</p>
+                      <p className="text-sm text-primary font-bold">{fecha} · {hora} — {Number(duracion) || 1}h</p>
+                    </div>
+                  )}
+                  {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h)) || (isTodayISO(fecha) && hourLabelToMinutes(h) < nowMinutes() + MIN_ADVANCE_MINUTES)) && (
                     <p className="mt-2 text-xs text-red-500">{text.noHoursAvailable}</p>
                   )}
                 </div>
@@ -539,8 +562,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 const selDate = fecha ? new Date(`${fecha}T00:00:00`) : null;
                 const inSch = selDate ? isOpenAt(schedule, selDate, mins) : true;
                 const occ = occupiedHourLabels.has(h);
-                const dis = occ || !inSch;
-                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : "";
+                const tooSoon = fecha && isTodayISO(fecha) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+                const dis = occ || !inSch || !!tooSoon;
+                const suffix = !inSch ? ` · ${text.outsideHoursLabel}` : occ ? ` · ${text.occupied}` : tooSoon ? " · < 2h" : "";
                 return <option key={h} value={h} disabled={dis}>{h}{suffix}</option>;
               })}
             </select>
@@ -593,6 +617,26 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
             </div>
           );
         })()}
+        {/* Policies notice */}
+        <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <p><strong>📋 {text.minAdvanceBooking}:</strong> {text.minAdvanceBookingDesc}</p>
+          <p><strong>🚫 {text.cancellationPolicyTitle}:</strong> {text.cancellationPolicyDesc}</p>
+        </div>
+
+        {/* Recurring reservation option */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <p className="mb-2 text-sm font-semibold text-foreground">{text.recurringReservation}</p>
+          <div className="flex gap-2 mb-2">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringWeekly}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringMonthly}
+            </label>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{text.recurringReminder}</p>
+        </div>
+
         <button onClick={handleSubmit} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60">
           <Mail className="h-4 w-4" /> {sending ? text.sending : text.submitReservation}
         </button>
