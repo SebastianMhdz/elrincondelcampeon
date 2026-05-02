@@ -12,7 +12,7 @@ import { createTournament } from "@/lib/torneos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Cancha } from "@/data/canchas";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { parseHours, isDayOpen } from "@/lib/horarios-cancha";
+import { parseHours, isDayOpen, parseModalidades } from "@/lib/horarios-cancha";
 
 interface Props {
   user: User;
