@@ -171,7 +171,7 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
                 <div className="flex items-center gap-2">
                   <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusColor(r.status)}`}>{statusLabel(r.status)}</span>
                   {(() => {
-                    const locked = hoursUntil(r) < 24;
+                    const locked = hoursUntil(r) < 16;
                     return (
                       <button
                         onClick={() => setToDelete(r)}
