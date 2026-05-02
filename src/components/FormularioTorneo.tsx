@@ -42,6 +42,15 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
 
   const selectedCancha = useMemo(() => canchas.find(c => String(c.id) === legacyId) ?? null, [canchas, legacyId]);
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
+  const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
+
+  // Reset format when court changes and current format is not available
+  useEffect(() => {
+    if (modalidades.length && !modalidades.includes(format)) {
+      setFormat(modalidades[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCancha?.id]);
 
   useEffect(() => {
     if (!legacyId) { setBusySlots([]); return; }
