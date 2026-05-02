@@ -617,6 +617,26 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
             </div>
           );
         })()}
+        {/* Policies notice */}
+        <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">
+          <p><strong>📋 {text.minAdvanceBooking}:</strong> {text.minAdvanceBookingDesc}</p>
+          <p><strong>🚫 {text.cancellationPolicyTitle}:</strong> {text.cancellationPolicyDesc}</p>
+        </div>
+
+        {/* Recurring reservation option */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <p className="mb-2 text-sm font-semibold text-foreground">{text.recurringReservation}</p>
+          <div className="flex gap-2 mb-2">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringWeekly}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringMonthly}
+            </label>
+          </div>
+          <p className="text-[11px] text-muted-foreground">{text.recurringReminder}</p>
+        </div>
+
         <button onClick={handleSubmit} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60">
           <Mail className="h-4 w-4" /> {sending ? text.sending : text.submitReservation}
         </button>
