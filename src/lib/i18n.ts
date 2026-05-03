@@ -386,6 +386,44 @@ export type Translation = {
   // Misc
   sessionClosed: string;
   byeShort: string;
+  // New extras
+  refreshment: string;
+  refreshmentDesc: string;
+  selectDrink: string;
+  drinkOptions: string;
+  confirmPassword: string;
+  passwordsMustMatch: string;
+  policiesTitle: string;
+  policiesAccept: string;
+  faqTitle: string;
+  faqSubtitle: string;
+  profanityWarning: string;
+  recurringEndDate: string;
+  recurringEndDateDesc: string;
+  routeSteps: string;
+  hour4: string;
+  hour5: string;
+  hour6: string;
+  tournamentDuration: string;
+  tournamentReserveRedirect: string;
+  banTemporary: string;
+  banPermanent: string;
+  adminUsers: string;
+  adminUsersDesc: string;
+  infractions: string;
+  noBans: string;
+  noInfractions: string;
+  viewInfractions: string;
+  banUser: string;
+  unbanUser: string;
+  banReason: string;
+  userBanned: string;
+  vestPrice: string;
+  ballPrice: string;
+  refreshmentPrice: string;
+  lockerRoomPrice: string;
+  eventTournamentPrice: string;
+  extrasCostNote: string;
 };
 
 export const translations: Record<Locale, Translation> = {
@@ -689,6 +727,41 @@ export const translations: Record<Locale, Translation> = {
     whatsappDirectOwnerDesc: "Escríbenos directo para una respuesta inmediata",
     routeMapTitle: "Mapa de la ruta",
     routeMapDesc: "Visualiza la ruta seleccionada en el mapa",
+    refreshment: "Refrigerio / bebidas",
+    refreshmentDesc: "10 unidades de 350ml",
+    selectDrink: "Selecciona la bebida",
+    drinkOptions: "Gatorade,Coca Cola,Sprite,Kola Román,Cerveza Águila,Cerveza Águila Light,Agua embotellada,Jugo Hit",
+    confirmPassword: "Confirmar contraseña",
+    passwordsMustMatch: "Las contraseñas no coinciden",
+    policiesTitle: "Políticas y condiciones",
+    policiesAccept: "Acepto las políticas y condiciones",
+    faqTitle: "Preguntas frecuentes",
+    faqSubtitle: "Todo sobre cómo funciona la plataforma",
+    profanityWarning: "Tu texto contiene lenguaje inapropiado. Por favor modifícalo.",
+    recurringEndDate: "Fecha de finalización",
+    recurringEndDateDesc: "Selecciona hasta cuándo se repetirá la reserva",
+    routeSteps: "Pasos de la ruta",
+    hour4: "4 horas", hour5: "5 horas", hour6: "6 horas",
+    tournamentDuration: "Duración diaria del torneo (horas)",
+    tournamentReserveRedirect: "Ir a reservar para el torneo",
+    banTemporary: "Baneo temporal",
+    banPermanent: "Baneo permanente",
+    adminUsers: "Gestión de usuarios",
+    adminUsersDesc: "Ver usuarios, infracciones y aplicar baneos",
+    infractions: "Infracciones",
+    noBans: "Sin baneos activos",
+    noInfractions: "Sin infracciones registradas",
+    viewInfractions: "Ver infracciones",
+    banUser: "Banear usuario",
+    unbanUser: "Desbanear",
+    banReason: "Razón del baneo",
+    userBanned: "Usuario baneado",
+    vestPrice: "$5.000/persona",
+    ballPrice: "$15.000",
+    refreshmentPrice: "$25.000 (10 uds.)",
+    lockerRoomPrice: "$75.000",
+    eventTournamentPrice: "$150.000",
+    extrasCostNote: "Los servicios adicionales se suman al costo de la reserva.",
   },
   en: {
     appName: "Champion's Corner",
@@ -868,6 +941,41 @@ export const translations: Record<Locale, Translation> = {
     whatsappDirectOwnerDesc: "Message us directly for an immediate response",
     routeMapTitle: "Route map",
     routeMapDesc: "Visualize the selected route on the map",
+    refreshment: "Refreshment / drinks",
+    refreshmentDesc: "10 units of 350ml",
+    selectDrink: "Select a drink",
+    drinkOptions: "Gatorade,Coca Cola,Sprite,Kola Román,Cerveza Águila,Cerveza Águila Light,Bottled Water,Hit Juice",
+    confirmPassword: "Confirm password",
+    passwordsMustMatch: "Passwords do not match",
+    policiesTitle: "Policies and conditions",
+    policiesAccept: "I accept the policies and conditions",
+    faqTitle: "Frequently Asked Questions",
+    faqSubtitle: "Everything about how the platform works",
+    profanityWarning: "Your text contains inappropriate language. Please modify it.",
+    recurringEndDate: "End date",
+    recurringEndDateDesc: "Select when the recurring booking ends",
+    routeSteps: "Route steps",
+    hour4: "4 hours", hour5: "5 hours", hour6: "6 hours",
+    tournamentDuration: "Daily tournament duration (hours)",
+    tournamentReserveRedirect: "Go to reserve for the tournament",
+    banTemporary: "Temporary ban",
+    banPermanent: "Permanent ban",
+    adminUsers: "User management",
+    adminUsersDesc: "View users, infractions and apply bans",
+    infractions: "Infractions",
+    noBans: "No active bans",
+    noInfractions: "No infractions recorded",
+    viewInfractions: "View infractions",
+    banUser: "Ban user",
+    unbanUser: "Unban",
+    banReason: "Ban reason",
+    userBanned: "User banned",
+    vestPrice: "$5,000/person",
+    ballPrice: "$15,000",
+    refreshmentPrice: "$25,000 (10 units)",
+    lockerRoomPrice: "$75,000",
+    eventTournamentPrice: "$150,000",
+    extrasCostNote: "Extra services are added to the booking cost.",
   },
   pt: {
     appName: "O Canto do Campeão",
@@ -1047,6 +1155,41 @@ export const translations: Record<Locale, Translation> = {
     whatsappDirectOwnerDesc: "Escreva-nos diretamente para resposta imediata",
     routeMapTitle: "Mapa da rota",
     routeMapDesc: "Visualize a rota selecionada no mapa",
+    refreshment: "Refrigerante / bebidas",
+    refreshmentDesc: "10 unidades de 350ml",
+    selectDrink: "Selecione a bebida",
+    drinkOptions: "Gatorade,Coca Cola,Sprite,Kola Román,Cerveja Águila,Cerveja Águila Light,Água engarrafada,Suco Hit",
+    confirmPassword: "Confirmar senha",
+    passwordsMustMatch: "As senhas não coincidem",
+    policiesTitle: "Políticas e condições",
+    policiesAccept: "Aceito as políticas e condições",
+    faqTitle: "Perguntas frequentes",
+    faqSubtitle: "Tudo sobre como a plataforma funciona",
+    profanityWarning: "Seu texto contém linguagem inapropriada. Por favor modifique.",
+    recurringEndDate: "Data de término",
+    recurringEndDateDesc: "Selecione até quando a reserva se repetirá",
+    routeSteps: "Passos da rota",
+    hour4: "4 horas", hour5: "5 horas", hour6: "6 horas",
+    tournamentDuration: "Duração diária do torneio (horas)",
+    tournamentReserveRedirect: "Ir para reservar para o torneio",
+    banTemporary: "Banimento temporário",
+    banPermanent: "Banimento permanente",
+    adminUsers: "Gestão de usuários",
+    adminUsersDesc: "Ver usuários, infrações e aplicar banimentos",
+    infractions: "Infrações",
+    noBans: "Sem banimentos ativos",
+    noInfractions: "Sem infrações registradas",
+    viewInfractions: "Ver infrações",
+    banUser: "Banir usuário",
+    unbanUser: "Desbanir",
+    banReason: "Razão do banimento",
+    userBanned: "Usuário banido",
+    vestPrice: "$5.000/pessoa",
+    ballPrice: "$15.000",
+    refreshmentPrice: "$25.000 (10 uds.)",
+    lockerRoomPrice: "$75.000",
+    eventTournamentPrice: "$150.000",
+    extrasCostNote: "Serviços extras são somados ao custo da reserva.",
   },
   de: {
     appName: "Ecke des Champions",
@@ -1226,5 +1369,40 @@ export const translations: Record<Locale, Translation> = {
     whatsappDirectOwnerDesc: "Schreib uns direkt für eine sofortige Antwort",
     routeMapTitle: "Routenkarte",
     routeMapDesc: "Zeige die ausgewählte Route auf der Karte",
+    refreshment: "Erfrischung / Getränke",
+    refreshmentDesc: "10 Einheiten à 350ml",
+    selectDrink: "Getränk wählen",
+    drinkOptions: "Gatorade,Coca Cola,Sprite,Kola Román,Cerveza Águila,Cerveza Águila Light,Wasser,Hit Saft",
+    confirmPassword: "Passwort bestätigen",
+    passwordsMustMatch: "Passwörter stimmen nicht überein",
+    policiesTitle: "Richtlinien und Bedingungen",
+    policiesAccept: "Ich akzeptiere die Richtlinien und Bedingungen",
+    faqTitle: "Häufig gestellte Fragen",
+    faqSubtitle: "Alles über die Plattform",
+    profanityWarning: "Dein Text enthält unangemessene Sprache. Bitte ändere ihn.",
+    recurringEndDate: "Enddatum",
+    recurringEndDateDesc: "Wähle, bis wann die Buchung wiederholt wird",
+    routeSteps: "Routenschritte",
+    hour4: "4 Stunden", hour5: "5 Stunden", hour6: "6 Stunden",
+    tournamentDuration: "Tägliche Turnierdauer (Stunden)",
+    tournamentReserveRedirect: "Zur Reservierung für das Turnier",
+    banTemporary: "Temporärer Bann",
+    banPermanent: "Permanenter Bann",
+    adminUsers: "Benutzerverwaltung",
+    adminUsersDesc: "Benutzer, Verstöße und Banns anzeigen",
+    infractions: "Verstöße",
+    noBans: "Keine aktiven Banns",
+    noInfractions: "Keine Verstöße",
+    viewInfractions: "Verstöße ansehen",
+    banUser: "Benutzer bannen",
+    unbanUser: "Bann aufheben",
+    banReason: "Banngrund",
+    userBanned: "Benutzer gebannt",
+    vestPrice: "$5.000/Person",
+    ballPrice: "$15.000",
+    refreshmentPrice: "$25.000 (10 Stk.)",
+    lockerRoomPrice: "$75.000",
+    eventTournamentPrice: "$150.000",
+    extrasCostNote: "Zusatzleistungen werden zum Buchungspreis addiert.",
   },
 };

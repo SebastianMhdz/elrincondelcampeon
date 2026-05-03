@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin, Eye, EyeOff } from "lucide-react";
+import { UserCircle, LogIn, UserPlus, LogOut, Pencil, MapPin, Eye, EyeOff, Shield } from "lucide-react";
 import type { Translation } from "@/lib/i18n";
 import ProfileEditor from "@/components/EditorPerfil";
 import UserAvatar from "@/components/AvatarUsuario";
@@ -18,11 +18,13 @@ const AccountSection = ({ text, user }: Props) => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
@@ -30,6 +32,14 @@ const AccountSection = ({ text, user }: Props) => {
   }, [user]);
 
   const handleSignUp = async () => {
+    if (password !== confirmPw) {
+      toast({ title: text.errorTitle, description: text.passwordsMustMatch, variant: "destructive" });
+      return;
+    }
+    if (!acceptedPolicies) {
+      toast({ title: text.errorTitle, description: text.policiesAccept, variant: "destructive" });
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email, password,
@@ -145,20 +155,41 @@ const AccountSection = ({ text, user }: Props) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
+            <button type="button" onClick={() => setShowPassword((v) => !v)}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
+        {mode === "signup" && (
+          <>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{text.confirmPassword}</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                className={`${inputClass} ${confirmPw && confirmPw !== password ? "border-destructive" : ""}`}
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="••••••••"
+              />
+              {confirmPw && confirmPw !== password && (
+                <p className="mt-1 text-xs text-destructive">{text.passwordsMustMatch}</p>
+              )}
+            </div>
+            <label className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground cursor-pointer hover:border-primary/40">
+              <input type="checkbox" checked={acceptedPolicies} onChange={(e) => setAcceptedPolicies(e.target.checked)} className="mt-0.5 accent-primary" />
+              <span>
+                <Shield className="mr-1 inline h-3.5 w-3.5 text-primary" />
+                {text.policiesAccept}
+              </span>
+            </label>
+          </>
+        )}
         <button
           onClick={mode === "signin" ? handleSignIn : handleSignUp}
-          disabled={loading}
+          disabled={loading || (mode === "signup" && (!acceptedPolicies || password !== confirmPw))}
           className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
         >
           {loading ? "..." : mode === "signin" ? text.signIn : text.createAccount}

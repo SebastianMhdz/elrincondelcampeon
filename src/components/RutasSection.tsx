@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { canchas as fallbackCanchas } from "@/data/canchas";
 import type { Cancha } from "@/data/canchas";
-import { Bus, Train, Car, Clock, ExternalLink, MapPin, Navigation } from "lucide-react";
+import { Bus, Train, Car, Clock, ExternalLink, MapPin, Navigation, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Translation } from "@/lib/i18n";
 import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
@@ -34,20 +34,9 @@ const RutasSection = ({ initialCancha, text }: Props) => {
   }, []);
 
   const cfg = {
-    urbano: { icon: <Bus className="h-4 w-4" />, label: text.urban, className: "bg-transit-light text-transit", travelMode: "transit" },
-    troncal: { icon: <Train className="h-4 w-4" />, label: text.trunk, className: "bg-accent/15 text-accent", travelMode: "transit" },
-    uber: { icon: <Car className="h-4 w-4" />, label: text.rideshare, className: "bg-foreground/10 text-foreground", travelMode: "driving" },
-  };
-
-  const getMapUrl = () => {
-    if (!selected) return "";
-    const origin = userLat && userLng ? `${userLat},${userLng}` : "";
-    const dest = `${selected.lat},${selected.lng}`;
-    const mode = selectedRouteType ? cfg[selectedRouteType].travelMode : "transit";
-    if (origin) {
-      return `https://www.google.com/maps/embed/v1/directions?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&origin=${origin}&destination=${dest}&mode=${mode}`;
-    }
-    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${dest}&zoom=15`;
+    urbano: { icon: <Bus className="h-4 w-4" />, label: text.urban, className: "bg-transit-light text-transit", color: "border-blue-500/40 bg-blue-500/5" },
+    troncal: { icon: <Train className="h-4 w-4" />, label: text.trunk, className: "bg-accent/15 text-accent", color: "border-orange-500/40 bg-orange-500/5" },
+    uber: { icon: <Car className="h-4 w-4" />, label: text.rideshare, className: "bg-foreground/10 text-foreground", color: "border-emerald-500/40 bg-emerald-500/5" },
   };
 
   return (
@@ -59,68 +48,87 @@ const RutasSection = ({ initialCancha, text }: Props) => {
       </select>
       {selected && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          {/* Route map */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Navigation className="h-4 w-4 text-primary" /> {text.routeMapTitle}
-            </h3>
-            <p className="mb-3 text-xs text-muted-foreground">{text.routeMapDesc}</p>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {(["urbano", "troncal", "uber"] as const).map((tipo) => {
-                const hasRoutes = selected.rutas.some(r => r.tipo === tipo);
-                if (!hasRoutes) return null;
-                const c = cfg[tipo];
-                return (
-                  <button
-                    key={tipo}
-                    onClick={() => setSelectedRouteType(tipo)}
-                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${selectedRouteType === tipo ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-accent"}`}
-                  >
-                    {c.icon} {c.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
-              <iframe
-                src={getMapUrl()}
-                className="h-full w-full border-0"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title={text.routeMapTitle}
-              />
-            </div>
-            {!userLat && (
-              <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-                <MapPin className="h-3 w-3" /> {text.enableLocation}
-              </p>
-            )}
+          {/* Route type selector */}
+          <div className="flex flex-wrap gap-2">
+            {(["urbano", "troncal", "uber"] as const).map((tipo) => {
+              const hasRoutes = selected.rutas.some(r => r.tipo === tipo);
+              if (!hasRoutes) return null;
+              const c = cfg[tipo];
+              return (
+                <button key={tipo} onClick={() => setSelectedRouteType(tipo)}
+                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${selectedRouteType === tipo ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-accent"}`}
+                >
+                  {c.icon} {c.label}
+                </button>
+              );
+            })}
           </div>
 
+          {/* Route steps - point by point */}
           {(["urbano", "troncal", "uber"] as const).map((tipo) => {
             const list = selected.rutas.filter((r) => r.tipo === tipo);
             if (!list.length) return null;
+            if (selectedRouteType && selectedRouteType !== tipo) return null;
             const c = cfg[tipo];
             return (
-              <div key={tipo} className="rounded-xl border border-border bg-card p-4">
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">{c.icon} {c.label}</h3>
-                {list.map((r, i) => (
-                  <div key={i} className="mb-3 flex items-start gap-3 last:mb-0">
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{i + 1}</div>
-                    <div className="flex-1">
-                      <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${c.className}`}>{r.linea}</span>
-                      <p className="text-sm text-muted-foreground">{r.parada}</p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{r.distancia}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-time" /> ~{r.duracion}</span>
+              <div key={tipo} className={`rounded-xl border p-4 ${c.color}`}>
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">{c.icon} {c.label}</h3>
+                {/* Start point - user location */}
+                <div className="relative">
+                  <div className="flex items-start gap-3">
+                    <div className="relative flex flex-col items-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-md">
+                        <MapPin className="h-4 w-4" />
                       </div>
+                      <div className="h-8 w-0.5 bg-primary/30" />
+                    </div>
+                    <div className="pt-1">
+                      <p className="text-xs font-semibold text-foreground">{text.yourLocation}</p>
+                      <p className="text-[11px] text-muted-foreground">{userLat ? `${userLat.toFixed(4)}, ${userLng?.toFixed(4)}` : text.notSharedYet}</p>
                     </div>
                   </div>
-                ))}
+
+                  {/* Route stops */}
+                  {list.map((r, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="relative flex flex-col items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-primary bg-card text-xs font-bold text-primary shadow-sm">
+                          {i + 1}
+                        </div>
+                        {i < list.length - 1 && <div className="h-8 w-0.5 bg-primary/20" />}
+                        {i === list.length - 1 && <div className="h-8 w-0.5 bg-accent/30" />}
+                      </div>
+                      <div className="flex-1 pt-1 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.className}`}>{r.linea}</span>
+                        </div>
+                        <p className="mt-1 text-sm font-medium text-foreground">{r.parada}</p>
+                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Navigation className="h-3 w-3 text-primary" /> {r.distancia}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-primary" /> ~{r.duracion}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* End point - destination */}
+                  <div className="flex items-start gap-3">
+                    <div className="relative flex flex-col items-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground shadow-md">
+                        ⚽
+                      </div>
+                    </div>
+                    <div className="pt-1">
+                      <p className="text-xs font-semibold text-foreground">{selected.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{selected.addr}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
+
+          {/* External apps */}
           <div className="rounded-xl border border-border bg-card p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">📱 {text.planWithApps}</h3>
             <div className="space-y-2">

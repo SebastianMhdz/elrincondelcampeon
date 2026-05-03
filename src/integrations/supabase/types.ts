@@ -507,6 +507,63 @@ export type Database = {
           },
         ]
       }
+      user_bans: {
+        Row: {
+          ban_type: string
+          banned_by: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          ban_type?: string
+          banned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          ban_type?: string
+          banned_by?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_infractions: {
+        Row: {
+          created_at: string
+          description: string
+          detected_in: string
+          id: string
+          infraction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          detected_in?: string
+          id?: string
+          infraction_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          detected_in?: string
+          id?: string
+          infraction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -9,13 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Translation } from "@/lib/i18n";
 import { getCanchas, subscribeToCanchasChanges } from "@/lib/canchas-bd";
-import { parseHours, parseModalidades, isOpenAt, isDayOpen, type Rango } from "@/lib/horarios-cancha";
+import { parseHours, parseModalidades, isOpenAt, isDayOpen } from "@/lib/horarios-cancha";
+import { containsProfanity } from "@/lib/filtro-palabras";
 
 interface ReservaSectionProps {
   initialCancha?: Cancha | null;
   text: Translation;
   user: User | null;
   onGoAccount: () => void;
+  tournamentMode?: {
+    startDate: string;
+    endDate: string;
+    canchaId: string;
+    format: string;
+    tournamentName: string;
+  } | null;
 }
 
 const horas = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM"];
@@ -28,7 +36,6 @@ const convertHourTo24 = (value: string) => {
   return `${hours.padStart(2, "0")}:${minutes}`;
 };
 
-// Parse "12:00AM-6:00PM" or "12:00 AM - 6:00 PM" into [startMinutes, endMinutes]
 const parseRange = (raw: string): [number, number] | null => {
   const m = raw.replace(/\s+/g, "").toUpperCase().match(/(\d{1,2}):?(\d{2})?(AM|PM)-(\d{1,2}):?(\d{2})?(AM|PM)/);
   if (!m) return null;
@@ -55,6 +62,13 @@ const hourLabelToMinutes = (selectedHour: string): number => {
   return hh * 60;
 };
 
+const minutesToLabel = (m: number) => {
+  const hh24 = Math.floor(((m % 1440) + 1440) % 1440 / 60);
+  const ap = hh24 >= 12 ? "PM" : "AM";
+  const hh12 = ((hh24 + 11) % 12) + 1;
+  return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
+};
+
 const priceAtMinutes = (
   hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
   minutes: number,
@@ -74,7 +88,6 @@ const priceAtMinutes = (
   return parsePrice(fallbackText ?? "");
 };
 
-// Compute total considering each hourly block may have a different price
 const computeBreakdown = (
   hourlyPricing: Array<{ hour: string; price: string }> | undefined | null,
   startHourLabel: string,
@@ -87,10 +100,7 @@ const computeBreakdown = (
   for (let i = 0; i < durationHours; i++) {
     const m = (startMin + i * 60) % 1440;
     const price = priceAtMinutes(hourlyPricing, m, fallbackText);
-    const hh24 = Math.floor(m / 60);
-    const ap = hh24 >= 12 ? "PM" : "AM";
-    const hh12 = ((hh24 + 11) % 12) + 1;
-    perHour.push({ label: `${String(hh12).padStart(2, "0")}:00 ${ap}`, price });
+    perHour.push({ label: minutesToLabel(m), price });
     total += price;
   }
   return { total, perHour };
@@ -98,10 +108,7 @@ const computeBreakdown = (
 
 const todayISO = () => {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
 const nowMinutes = () => {
@@ -111,20 +118,32 @@ const nowMinutes = () => {
 
 const isTodayISO = (dateStr: string) => dateStr === todayISO();
 
-const MIN_ADVANCE_MINUTES = 120; // 2 hours
+const MIN_ADVANCE_MINUTES = 120;
 
-const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSectionProps) => {
+// Extra services pricing
+const EXTRAS_PRICING: Record<string, number> = {
+  vest: 5000,
+  ball: 15000,
+  refreshment: 25000,
+  lockerRoom: 75000,
+  eventTournament: 150000,
+};
+
+const DRINK_OPTIONS = ["Gatorade", "Coca Cola", "Sprite", "Kola Román", "Cerveza Águila", "Cerveza Águila Light", "Agua embotellada", "Jugo Hit"];
+
+const ReservaSection = ({ initialCancha, text, user, onGoAccount, tournamentMode }: ReservaSectionProps) => {
   const { toast } = useToast();
-  const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : "");
+  const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : tournamentMode?.canchaId ?? "");
   const [nombre, setNombre] = useState(user?.user_metadata?.display_name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [tel, setTel] = useState("");
-  const [fecha, setFecha] = useState("");
+  const [fecha, setFecha] = useState(tournamentMode?.startDate ?? "");
   const [hora, setHora] = useState(horas[0]);
+  const maxDuration = tournamentMode ? 6 : 3;
   const [duracion, setDuracion] = useState("1");
-  const [jugadores, setJugadores] = useState("Fútbol 5 (10 jug.)");
-  const [extras, setExtras] = useState<string[]>([]);
-  const [nota, setNota] = useState("");
+  const [jugadores, setJugadores] = useState(tournamentMode?.format ?? "Fútbol 5 (10 jug.)");
+  const [extras, setExtras] = useState<string[]>(tournamentMode ? ["eventTournament"] : []);
+  const [nota, setNota] = useState(tournamentMode ? `Torneo: ${tournamentMode.tournamentName}` : "");
   const [paymentMode, setPaymentMode] = useState<"partial" | "full">("partial");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -134,6 +153,11 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const [dbCanchas, setDbCanchas] = useState<Array<{ id: string; legacy_id: number | null; name: string; precio: string | null; hourly_pricing: any }>>([]);
   const [busySlots, setBusySlots] = useState<Array<{ reservation_date: string; start_time: string; duration_hours: number }>>([]);
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); return d; });
+  // Recurring reservation
+  const [recurringType, setRecurringType] = useState<"none" | "weekly" | "monthly">("none");
+  const [recurringEndDate, setRecurringEndDate] = useState("");
+  // Drink selection
+  const [selectedDrink, setSelectedDrink] = useState(DRINK_OPTIONS[0]);
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
@@ -158,7 +182,6 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
   }, [user]);
 
-  // Load busy slots for the selected court / visible month
   useEffect(() => {
     const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
     if (!cdb) { setBusySlots([]); return; }
@@ -175,7 +198,6 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     return () => { active = false; };
   }, [canchaId, dbCanchas, calendarMonth]);
 
-  // Cancha seleccionada (objeto Cancha completo) y derivados (horario y modalidades)
   const selectedCancha = useMemo(() => {
     const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
     if (cdb) return canchas.find((c) => c.id === cdb.legacy_id) ?? null;
@@ -185,21 +207,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
   const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
 
-  // Cuando cambia la cancha, ajustar la modalidad por defecto si la actual no aplica.
   useEffect(() => {
     if (modalidades.length && !modalidades.includes(jugadores)) {
       setJugadores(modalidades[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCancha?.id]);
 
-  // ---- Hooks de derivados de calendario (deben ir ANTES de cualquier early return) ----
-  const minutesToHourLabel = (m: number) => {
-    const hh24 = Math.floor(m / 60);
-    const ap = hh24 >= 12 ? "PM" : "AM";
-    const hh12 = ((hh24 + 11) % 12) + 1;
-    return `${String(hh12).padStart(2, "0")}:00 ${ap}`;
-  };
   const occupiedHourLabels = useMemo(() => {
     const set = new Set<string>();
     if (!fecha) return set;
@@ -208,11 +221,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       const [hh, mm] = slot.start_time.split(":").map(Number);
       const start = hh * 60 + (mm || 0);
       for (let i = 0; i < (slot.duration_hours || 1); i++) {
-        set.add(minutesToHourLabel(start + i * 60));
+        set.add(minutesToLabel(start + i * 60));
       }
     }
     return set;
   }, [fecha, busySlots]);
+
   const dayStatuses = useMemo(() => {
     const map = new Map<string, { occupied: number }>();
     for (const slot of busySlots) {
@@ -222,6 +236,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
     return map;
   }, [busySlots]);
+
   const calendarDays = useMemo(() => {
     const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
     const last = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
@@ -232,6 +247,32 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     while (days.length % 7 !== 0) days.push({ date: null });
     return days;
   }, [calendarMonth]);
+
+  // Check if court has a roof (covered)
+  const isCourtCovered = useMemo(() => {
+    if (!selectedCancha) return false;
+    const services = selectedCancha.servicios.join(" ").toLowerCase();
+    return services.includes("techada") || services.includes("techo") || services.includes("cubierta") || services.includes("covered");
+  }, [selectedCancha]);
+
+  // Check if selected time is evening/night (>= 6PM)
+  const isNightTime = useMemo(() => {
+    const mins = hourLabelToMinutes(hora);
+    return mins >= 18 * 60 || mins < 6 * 60; // 6 PM or later, or before 6 AM
+  }, [hora]);
+
+  // Compute extras cost
+  const extrasTotal = useMemo(() => {
+    let total = 0;
+    for (const e of extras) {
+      if (e === "vest") total += EXTRAS_PRICING.vest;
+      else if (e === "ball") total += EXTRAS_PRICING.ball;
+      else if (e === "refreshment") total += EXTRAS_PRICING.refreshment;
+      else if (e === "lockerRoom") total += EXTRAS_PRICING.lockerRoom;
+      else if (e === "eventTournament") total += EXTRAS_PRICING.eventTournament;
+    }
+    return total;
+  }, [extras]);
 
   if (!user) {
     return (
@@ -251,19 +292,21 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
+    if (containsProfanity(nota) || containsProfanity(nombre)) {
+      toast({ title: text.errorTitle, description: text.profanityWarning, variant: "destructive" });
+      return;
+    }
     if (fecha < todayISO()) {
       toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
       return;
     }
-    // Validate minimum 2 hours advance
     const startMin = hourLabelToMinutes(hora);
     if (isTodayISO(fecha) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
       toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
       return;
     }
-    // Validar horario de la cancha
     const selDate = new Date(`${fecha}T00:00:00`);
-    const dur = Number(duracion) || 1;
+    const dur = Math.min(Number(duracion) || 1, maxDuration);
     let withinSchedule = true;
     for (let i = 0; i < dur; i++) {
       if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
@@ -279,6 +322,17 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       toast({ title: text.errorTitle, description: "Cancha no disponible", variant: "destructive" });
       setSending(false); return;
     }
+
+    // Build extras labels for email
+    const extrasLabels = extras.map(e => {
+      if (e === "vest") return `${text.vest} (${text.vestPrice})`;
+      if (e === "ball") return `${text.ball} (${text.ballPrice})`;
+      if (e === "refreshment") return `${text.refreshment}: ${selectedDrink} (${text.refreshmentPrice})`;
+      if (e === "lockerRoom") return `${text.lockerRoom} (${text.lockerRoomPrice})`;
+      if (e === "eventTournament") return `${text.eventTournament} (${text.eventTournamentPrice})`;
+      return e;
+    });
+
     const { error: reservationError } = await supabase.from("reservations").insert({
       cancha_id: canchaDb.id,
       user_id: user.id,
@@ -287,9 +341,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
       customer_phone: tel,
       reservation_date: fecha,
       start_time: `${convertHourTo24(hora)}:00`,
-      duration_hours: Number(duracion) || 1,
+      duration_hours: dur,
       format_label: jugadores,
-      extras,
+      extras: extrasLabels,
       note: nota || null,
     });
     if (reservationError) {
@@ -298,25 +352,21 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
     }
 
     const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
-    const totalPrice = breakdown.total;
-    const avgPerHour = dur > 0 ? Math.round(totalPrice / dur) : totalPrice;
+    const totalPrice = breakdown.total + extrasTotal;
     const deposit = Math.round(totalPrice * 0.30);
-    const remaining = totalPrice - deposit;
-    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
-    const precioStr = totalPrice > 0
-      ? `Desglose: ${desglose} · Total ${formatCOP(totalPrice)} · Depósito 30%: ${formatCOP(deposit)} · Saldo en sitio: ${formatCOP(remaining)}`
-      : (cancha.precio ?? "—");
 
-    const message = `Reserva de ${cancha.name}\nDirección: ${cancha.addr}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nModalidad: ${jugadores}\n\nDesglose por hora:\n${breakdown.perHour.map(p => `  • ${p.label}: ${formatCOP(p.price)}`).join("\n")}\n\nTotal: ${formatCOP(totalPrice)}\nPago parcial requerido (30%): ${formatCOP(deposit)}\nSaldo a pagar en sitio: ${formatCOP(remaining)}`;
+    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
+    const message = `Reserva de ${cancha.name}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nExtras: ${extrasLabels.join(", ") || "—"}\nTotal cancha: ${formatCOP(breakdown.total)}\nExtras: ${formatCOP(extrasTotal)}\nTotal: ${formatCOP(totalPrice)}\nDepósito 30%: ${formatCOP(deposit)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
-        fecha, hora, duracion: `${dur}h`, jugadores, extras: extras.join(", ") || "—",
-        nota: nota || "—", precio: precioStr, phone: cancha.phone, message,
-        precio_hora: formatCOP(avgPerHour),
+        fecha, hora, duracion: `${dur}h`, jugadores, extras: extrasLabels.join(", ") || "—",
+        nota: nota || "—", precio: `Total: ${formatCOP(totalPrice)} (Cancha: ${formatCOP(breakdown.total)} + Extras: ${formatCOP(extrasTotal)})`,
+        phone: cancha.phone, message,
+        precio_hora: formatCOP(Math.round(breakdown.total / dur)),
         precio_total: formatCOP(totalPrice),
         deposito: formatCOP(deposit),
-        saldo: formatCOP(remaining),
+        saldo: formatCOP(totalPrice - deposit),
         desglose,
       }, "KPKZLlVPikmlp69eo");
     } catch (e) {
@@ -354,17 +404,11 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
           <p className="mb-3 text-xs text-muted-foreground">{text.choosePayment}</p>
 
           <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              onClick={() => setPaymentMode("partial")}
-              className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "partial" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
-            >
+            <button onClick={() => setPaymentMode("partial")} className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "partial" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
               <p className="font-semibold text-foreground">{text.partialPayment}</p>
               <p className="text-xs text-muted-foreground">{text.partialPaymentDesc}</p>
             </button>
-            <button
-              onClick={() => setPaymentMode("full")}
-              className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "full" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}
-            >
+            <button onClick={() => setPaymentMode("full")} className={`rounded-lg border p-3 text-left text-sm transition ${paymentMode === "full" ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
               <p className="font-semibold text-foreground">{text.fullPayment}</p>
               <p className="text-xs text-muted-foreground">{text.fullPaymentDesc}</p>
             </button>
@@ -396,10 +440,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 </div>
                 <p className="text-xs text-muted-foreground break-words">{m.num}</p>
                 <p className="mt-1 text-[11px] text-muted-foreground">{text.amountLabel}: <strong className="text-foreground">{formatCOP(paymentMode === "partial" ? lastDeposit : lastTotal)}</strong></p>
-                <a
-                  href={m.url} target="_blank" rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
-                >
+                <a href={m.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20">
                   <ExternalLink className="h-3 w-3" /> {text.payOnlineLink}
                 </a>
               </div>
@@ -421,15 +462,36 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
   const today0 = new Date(); today0.setHours(0, 0, 0, 0);
 
   const monthLabel = calendarMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+  const weekDays = ["D", "L", "M", "M", "J", "V", "S"];
+
+  const dur = Math.min(Number(duracion) || 1, maxDuration);
+  const startMin = hourLabelToMinutes(hora);
+  const endMin = startMin + dur * 60;
+  const endLabel = minutesToLabel(endMin);
+
+  // Build set of hours covered by current selection for multi-hour highlight
+  const selectedHourSet = useMemo(() => {
+    const set = new Set<string>();
+    if (!hora || !fecha) return set;
+    for (let i = 0; i < dur; i++) {
+      set.add(minutesToLabel(startMin + i * 60));
+    }
+    return set;
+  }, [hora, dur, startMin, fecha]);
 
   return (
     <div className="section-sport-panel rounded-[22px] p-4 sm:p-5 md:p-6">
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><CalendarCheck className="h-5 w-5 text-primary" /> {text.bookYourCourtTitle}</h2>
+      {tournamentMode && (
+        <div className="mb-4 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm">
+          <p className="font-semibold text-foreground">🏆 {tournamentMode.tournamentName}</p>
+          <p className="text-xs text-muted-foreground">Del {tournamentMode.startDate} al {tournamentMode.endDate} · {tournamentMode.format}</p>
+        </div>
+      )}
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5">
         <div>
           <label className={labelClass}>{text.court}</label>
-          <select value={canchaId} onChange={(e) => setCanchaId(e.target.value)} className={inputClass}>
+          <select value={canchaId} onChange={(e) => setCanchaId(e.target.value)} className={inputClass} disabled={!!tournamentMode}>
             <option value="">{text.selectCourtPlaceholder}</option>
             {dbCanchas.length > 0
               ? dbCanchas.map((c) => <option key={c.id} value={c.id}>{c.name} – {c.precio}</option>)
@@ -472,10 +534,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
                 if (selected) cls += " ring-2 ring-primary";
                 return (
-                  <button
-                    key={idx} type="button"
-                    disabled={isPast || allBusy || !dayOpen}
-                    onClick={() => setFecha(key)}
+                  <button key={idx} type="button" disabled={isPast || allBusy || !dayOpen} onClick={() => setFecha(key)}
                     className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
                     title={!dayOpen ? text.courtClosedDay : undefined}
                   >
@@ -495,9 +554,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
             {fecha ? (() => {
               const selDate = new Date(`${fecha}T00:00:00`);
               const dayOpen = isDayOpen(schedule, selDate);
-              if (!dayOpen) {
-                return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
-              }
+              if (!dayOpen) return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
               return (
                 <div className="mt-4">
                   <p className="mb-2 text-xs font-semibold text-foreground">{fecha}</p>
@@ -507,19 +564,18 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                       const mins = hourLabelToMinutes(h);
                       const inSchedule = isOpenAt(schedule, selDate, mins);
                       const tooSoon = isTodayISO(fecha) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+                      const isInSelection = selectedHourSet.has(h) && !isOcc && inSchedule && !tooSoon;
                       const isSel = hora === h && !isOcc && inSchedule && !tooSoon;
                       const disabled = isOcc || !inSchedule || tooSoon;
                       let cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300";
                       if (isSel) cls = "border-primary bg-primary text-primary-foreground";
+                      else if (isInSelection) cls = "border-primary/60 bg-primary/20 text-primary ring-1 ring-primary/40";
                       else if (isOcc) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
                       else if (tooSoon) cls = "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 cursor-not-allowed";
                       else if (!inSchedule) cls = "border-border bg-muted/40 text-muted-foreground/60 cursor-not-allowed";
                       const label = !inSchedule ? text.outsideHoursLabel : isOcc ? text.occupied : tooSoon ? "< 2h" : text.available;
                       return (
-                        <button
-                          key={h} type="button"
-                          disabled={disabled}
-                          onClick={() => !disabled && setHora(h)}
+                        <button key={h} type="button" disabled={disabled} onClick={() => !disabled && setHora(h)}
                           className={`rounded-md border px-2 py-1.5 text-[11px] font-semibold transition ${cls}`}
                           title={tooSoon ? text.tooSoonToBook : !inSchedule ? text.outsideHoursLabel : undefined}
                         >
@@ -531,7 +587,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                   {hora && !occupiedHourLabels.has(hora) && (
                     <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-2.5">
                       <p className="text-xs font-semibold text-foreground">{text.selectedHoursPreview}:</p>
-                      <p className="text-sm text-primary font-bold">{fecha} · {hora} — {Number(duracion) || 1}h</p>
+                      <p className="text-sm text-primary font-bold">{fecha} · {hora} — {endLabel} ({dur}h)</p>
                     </div>
                   )}
                   {horas.every((h) => occupiedHourLabels.has(h) || !isOpenAt(schedule, selDate, hourLabelToMinutes(h)) || (isTodayISO(fecha) && hourLabelToMinutes(h) < nowMinutes() + MIN_ADVANCE_MINUTES)) && (
@@ -569,25 +625,80 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
               })}
             </select>
           </div>
-          <div><label className={labelClass}>{text.duration}</label><select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={inputClass}><option value="1">{text.hour1}</option><option value="2">{text.hour2}</option><option value="3">{text.hour3}</option></select></div>
+          <div>
+            <label className={labelClass}>{text.duration}</label>
+            <select value={duracion} onChange={(e) => setDuracion(e.target.value)} className={inputClass}>
+              <option value="1">{text.hour1}</option>
+              <option value="2">{text.hour2}</option>
+              <option value="3">{text.hour3}</option>
+              {tournamentMode && (
+                <>
+                  <option value="4">{text.hour4}</option>
+                  <option value="5">{text.hour5}</option>
+                  <option value="6">{text.hour6}</option>
+                </>
+              )}
+            </select>
+          </div>
         </div>
         <div>
           <label className={labelClass}>{text.modality}</label>
           <select value={jugadores} onChange={(e) => setJugadores(e.target.value)} className={inputClass}>
             {modalidades.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
-          {selectedCancha?.tipo && (
-            <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>
-          )}
+          {selectedCancha?.tipo && <p className="mt-1 text-[11px] text-muted-foreground">{selectedCancha.tipo}</p>}
         </div>
         <div>
           <label className={labelClass}>{text.extraServices}</label>
-          <div className="mt-1 grid grid-cols-2 gap-2">
-            {[text.vest, text.ball, text.nightLighting, text.lockerRoom, text.coveredCourt, text.eventTournament].map((e) => (
-              <label key={e} className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground">
-                <input type="checkbox" checked={extras.includes(e)} onChange={() => toggleExtra(e)} className="accent-primary" /> {e}
+          <p className="mb-2 text-[11px] text-muted-foreground">{text.extrasCostNote}</p>
+          <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {/* Vest */}
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm text-muted-foreground transition hover:text-foreground hover:border-primary/40">
+              <input type="checkbox" checked={extras.includes("vest")} onChange={() => toggleExtra("vest")} className="accent-primary" />
+              <div>
+                <span className="font-medium text-foreground">{text.vest}</span>
+                <span className="ml-1 text-xs text-primary">{text.vestPrice}</span>
+              </div>
+            </label>
+            {/* Ball */}
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm text-muted-foreground transition hover:text-foreground hover:border-primary/40">
+              <input type="checkbox" checked={extras.includes("ball")} onChange={() => toggleExtra("ball")} className="accent-primary" />
+              <div>
+                <span className="font-medium text-foreground">{text.ball}</span>
+                <span className="ml-1 text-xs text-primary">{text.ballPrice}</span>
+              </div>
+            </label>
+            {/* Refreshment */}
+            <div className="rounded-lg border border-border bg-muted/20 p-2">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground">
+                <input type="checkbox" checked={extras.includes("refreshment")} onChange={() => toggleExtra("refreshment")} className="accent-primary" />
+                <div>
+                  <span className="font-medium text-foreground">{text.refreshment}</span>
+                  <span className="ml-1 text-xs text-primary">{text.refreshmentPrice}</span>
+                </div>
               </label>
-            ))}
+              {extras.includes("refreshment") && (
+                <select value={selectedDrink} onChange={(e) => setSelectedDrink(e.target.value)} className="mt-2 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground">
+                  {DRINK_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              )}
+            </div>
+            {/* Locker room */}
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm text-muted-foreground transition hover:text-foreground hover:border-primary/40">
+              <input type="checkbox" checked={extras.includes("lockerRoom")} onChange={() => toggleExtra("lockerRoom")} className="accent-primary" />
+              <div>
+                <span className="font-medium text-foreground">{text.lockerRoom}</span>
+                <span className="ml-1 text-xs text-primary">{text.lockerRoomPrice}</span>
+              </div>
+            </label>
+            {/* Event/Tournament */}
+            <label className={`flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm transition ${tournamentMode ? "cursor-not-allowed opacity-60" : "cursor-pointer text-muted-foreground hover:text-foreground hover:border-primary/40"}`}>
+              <input type="checkbox" checked={extras.includes("eventTournament")} onChange={() => !tournamentMode && toggleExtra("eventTournament")} disabled={!!tournamentMode} className="accent-primary" />
+              <div>
+                <span className="font-medium text-foreground">{text.eventTournament}</span>
+                <span className="ml-1 text-xs text-primary">{text.eventTournamentPrice}</span>
+              </div>
+            </label>
           </div>
         </div>
         <div>
@@ -597,10 +708,11 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
         {(() => {
           const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
           if (!cdb) return null;
-          const dur = Number(duracion) || 1;
           const bd = computeBreakdown(cdb.hourly_pricing as any, hora, dur, cdb.precio);
-          if (bd.total <= 0) return null;
-          const dep = Math.round(bd.total * 0.30);
+          const courtTotal = bd.total;
+          const grandTotal = courtTotal + extrasTotal;
+          if (grandTotal <= 0) return null;
+          const dep = Math.round(grandTotal * 0.30);
           const varies = new Set(bd.perHour.map(p => p.price)).size > 1;
           return (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
@@ -611,31 +723,42 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount }: ReservaSecti
                 ))}
               </ul>
               {varies && <p className="text-[11px] text-primary">{text.variesByHour}</p>}
-              <p className="text-foreground">{text.totalLabel}: <strong>{formatCOP(bd.total)}</strong></p>
+              {extrasTotal > 0 && (
+                <p className="text-xs text-muted-foreground">{text.extraServices}: <strong className="text-foreground">{formatCOP(extrasTotal)}</strong></p>
+              )}
+              <p className="text-foreground">{text.totalLabel}: <strong>{formatCOP(grandTotal)}</strong></p>
               <p className="text-primary">{text.partialPaymentRequired}: <strong>{formatCOP(dep)}</strong></p>
-              <p className="text-xs text-muted-foreground">{text.remainingAtSite}: {formatCOP(bd.total - dep)}</p>
+              <p className="text-xs text-muted-foreground">{text.remainingAtSite}: {formatCOP(grandTotal - dep)}</p>
             </div>
           );
         })()}
-        {/* Policies notice */}
         <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">
           <p><strong>📋 {text.minAdvanceBooking}:</strong> {text.minAdvanceBookingDesc}</p>
           <p><strong>🚫 {text.cancellationPolicyTitle}:</strong> {text.cancellationPolicyDesc}</p>
         </div>
 
-        {/* Recurring reservation option */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3">
-          <p className="mb-2 text-sm font-semibold text-foreground">{text.recurringReservation}</p>
-          <div className="flex gap-2 mb-2">
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringWeekly}
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
-              <input type="checkbox" className="accent-primary" onChange={() => {}} /> {text.recurringMonthly}
-            </label>
+        {/* Recurring reservation - blocked in tournament mode */}
+        {!tournamentMode && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <p className="mb-2 text-sm font-semibold text-foreground">{text.recurringReservation}</p>
+            <div className="flex gap-3 mb-2">
+              {(["none", "weekly", "monthly"] as const).map(rt => (
+                <label key={rt} className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                  <input type="radio" name="recurring" checked={recurringType === rt} onChange={() => setRecurringType(rt)} className="accent-primary" />
+                  {rt === "none" ? "—" : rt === "weekly" ? text.recurringWeekly : text.recurringMonthly}
+                </label>
+              ))}
+            </div>
+            {recurringType !== "none" && (
+              <div className="mt-2">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">{text.recurringEndDate}</label>
+                <input type="date" value={recurringEndDate} min={fecha || todayISO()} onChange={(e) => setRecurringEndDate(e.target.value)} className={inputClass} />
+                <p className="mt-1 text-[11px] text-muted-foreground">{text.recurringEndDateDesc}</p>
+              </div>
+            )}
+            <p className="mt-2 text-[11px] text-muted-foreground">{text.recurringReminder}</p>
           </div>
-          <p className="text-[11px] text-muted-foreground">{text.recurringReminder}</p>
-        </div>
+        )}
 
         <button onClick={handleSubmit} disabled={sending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60">
           <Mail className="h-4 w-4" /> {sending ? text.sending : text.submitReservation}
