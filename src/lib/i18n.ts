@@ -386,6 +386,44 @@ export type Translation = {
   // Misc
   sessionClosed: string;
   byeShort: string;
+  // New extras
+  refreshment: string;
+  refreshmentDesc: string;
+  selectDrink: string;
+  drinkOptions: string;
+  confirmPassword: string;
+  passwordsMustMatch: string;
+  policiesTitle: string;
+  policiesAccept: string;
+  faqTitle: string;
+  faqSubtitle: string;
+  profanityWarning: string;
+  recurringEndDate: string;
+  recurringEndDateDesc: string;
+  routeSteps: string;
+  hour4: string;
+  hour5: string;
+  hour6: string;
+  tournamentDuration: string;
+  tournamentReserveRedirect: string;
+  banTemporary: string;
+  banPermanent: string;
+  adminUsers: string;
+  adminUsersDesc: string;
+  infractions: string;
+  noBans: string;
+  noInfractions: string;
+  viewInfractions: string;
+  banUser: string;
+  unbanUser: string;
+  banReason: string;
+  userBanned: string;
+  vestPrice: string;
+  ballPrice: string;
+  refreshmentPrice: string;
+  lockerRoomPrice: string;
+  eventTournamentPrice: string;
+  extrasCostNote: string;
 };
 
 export const translations: Record<Locale, Translation> = {
