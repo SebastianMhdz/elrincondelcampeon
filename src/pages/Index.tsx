@@ -28,6 +28,9 @@ const Index = () => {
   const [tab, setTab] = useState<Tab>("inicio");
   const [mapCancha, setMapCancha] = useState<Cancha | null>(null);
   const [reservaCancha, setReservaCancha] = useState<Cancha | null>(null);
+  const [tournamentMode, setTournamentMode] = useState<{
+    startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string;
+  } | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>(() => (localStorage.getItem("app-locale") as Locale) || "es");
   const [theme, setTheme] = useState<ThemeMode>(() => (localStorage.getItem("app-theme") as ThemeMode) || "light");
