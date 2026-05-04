@@ -255,10 +255,10 @@ const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount, onRes
 
       {isOrganizer && onReserveForTournament && t.status !== "finished" && t.status !== "cancelled" && (
         <div className="rounded-[22px] border border-accent/30 bg-accent/5 p-5">
-          <h3 className="mb-2 text-sm font-bold text-foreground">🏟️ {text.reserveCourtForTournament ?? "Reservar cancha para el torneo"}</h3>
-          <p className="mb-3 text-xs text-muted-foreground">{text.reserveCourtForTournamentDesc ?? "Crea la reserva financiera de la cancha para asegurar las fechas del torneo."}</p>
+          <h3 className="mb-2 text-sm font-bold text-foreground">🏟️ {text.reserveCourtForTournament}</h3>
+          <p className="mb-3 text-xs text-muted-foreground">{text.reserveCourtForTournamentDesc}</p>
           <Button onClick={() => onReserveForTournament({ startDate: t.start_date, endDate: t.end_date, canchaId: t.cancha_id, format: t.format, tournamentName: t.name })} className="gap-1.5">
-            <CalendarCheck className="h-4 w-4" /> {text.reserveNow ?? "Reservar ahora"}
+            <CalendarCheck className="h-4 w-4" /> {text.reserveNow}
           </Button>
         </div>
       )}
