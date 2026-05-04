@@ -28,7 +28,7 @@ interface Props {
 interface SignupView extends TournamentSignup { _name?: string; _avatar?: string | null; }
 interface AnnView extends TournamentAnnouncement { _name?: string; _avatar?: string | null; }
 
-const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount }: Props) => {
+const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount, onReserveForTournament }: Props) => {
   const { toast } = useToast();
   const [t, setT] = useState<Tournament | null>(null);
   const [canchaName, setCanchaName] = useState<string>("");
