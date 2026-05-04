@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { ArrowLeft, Calendar, Users, Award, Phone, Megaphone, Trash2, MapPin, Loader2, LogIn } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarCheck, Users, Award, Phone, Megaphone, Trash2, MapPin, Loader2, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
