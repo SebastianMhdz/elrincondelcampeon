@@ -889,7 +889,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Publish announcement", noAnnouncementsYet: "No announcements yet.",
     organizerPanel: "Organizer panel", signupsOpenSwitchLabel: "Sign-ups open", signupsOpenSwitchDesc: "Toggle the option to sign up.",
     deleteTournament: "Delete tournament", confirmDeleteTournament: "Delete the tournament? This cannot be undone.",
-    tournamentDeleted: "Tournament deleted", tournamentNotFound: "Tournament not found", goBack: "Back", organizer: "Organizer",
+    tournamentDeleted: "Tournament deleted", reserveCourtForTournament: "Reserve court for tournament", reserveCourtForTournamentDesc: "Create the financial reservation to secure the court dates for the tournament.", reserveNow: "Reserve now", tournamentDeletedByCancellation: "The associated tournament has also been deleted upon cancelling the reservation.", tournamentNotFound: "Tournament not found", goBack: "Back", organizer: "Organizer",
     missingTeamName: "Name missing", writeTeamName: "Write your team name",
     registered: "Registered!", teamRegistered: "Your team is registered for the tournament",
     cannotRegister: "Could not register", checkSlots: "Check if there are slots available",
