@@ -1103,7 +1103,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Publicar anúncio", noAnnouncementsYet: "Ainda sem anúncios.",
     organizerPanel: "Painel do organizador", signupsOpenSwitchLabel: "Inscrições abertas", signupsOpenSwitchDesc: "Ative ou desative a opção de inscrever-se.",
     deleteTournament: "Excluir torneio", confirmDeleteTournament: "Excluir o torneio? Isto não pode ser desfeito.",
-    tournamentDeleted: "Torneio excluído", tournamentNotFound: "Torneio não encontrado", goBack: "Voltar", organizer: "Organizador",
+    tournamentDeleted: "Torneio excluído", reserveCourtForTournament: "Reservar quadra para o torneio", reserveCourtForTournamentDesc: "Crie a reserva financeira para garantir as datas do torneio.", reserveNow: "Reservar agora", tournamentDeletedByCancellation: "O torneio associado também foi excluído ao cancelar a reserva.", tournamentNotFound: "Torneio não encontrado", goBack: "Voltar", organizer: "Organizador",
     missingTeamName: "Falta o nome", writeTeamName: "Escreva o nome do time",
     registered: "Inscrito!", teamRegistered: "Seu time foi inscrito no torneio",
     cannotRegister: "Não foi possível inscrever", checkSlots: "Verifique se há vagas disponíveis",
