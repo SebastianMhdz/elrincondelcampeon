@@ -99,6 +99,24 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
       return;
     }
 
+    // If reservation is linked to a tournament (note starts with "Torneo:"), delete the tournament too
+    let tournamentDeleted = false;
+    if (toDelete.note && toDelete.note.startsWith("Torneo:")) {
+      const tournamentName = toDelete.note.replace("Torneo:", "").trim();
+      const { data: tournaments } = await supabase
+        .from("tournaments")
+        .select("id")
+        .eq("cancha_id", toDelete.cancha_id)
+        .eq("organizer_id", user!.id)
+        .ilike("name", tournamentName);
+      if (tournaments && tournaments.length > 0) {
+        for (const t of tournaments) {
+          await supabase.from("tournaments").delete().eq("id", t.id);
+        }
+        tournamentDeleted = true;
+      }
+    }
+
     const extrasArr = Array.isArray(toDelete.extras) ? (toDelete.extras as string[]) : [];
     const message = `Reserva cancelada en ${toDelete.cancha_name ?? ""}\nFecha: ${toDelete.reservation_date} ${toDelete.start_time}\nDuración: ${toDelete.duration_hours}h`;
     try {
@@ -121,7 +139,7 @@ const MisReservasSection = ({ text, user, onGoAccount }: Props) => {
       console.error("EmailJS cancel:", e);
     }
 
-    toast({ title: "✓", description: "Reserva eliminada y email de confirmación enviado." });
+    toast({ title: "✓", description: tournamentDeleted ? text.tournamentDeletedByCancellation : "Reserva eliminada y email de confirmación enviado." });
     setToDelete(null);
     setDeleting(false);
     loadReservations();
