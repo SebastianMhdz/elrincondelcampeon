@@ -55,6 +55,11 @@ const Index = () => {
   const handleMapSelect = (c: Cancha) => { setMapCancha(c); setTab("mapa"); };
   const handleReserveSelect = (c: Cancha) => { setReservaCancha(c); setTab("reservar"); };
   const handleSelectTournament = (id: string) => { setSelectedTournament(id); setTab("torneos"); };
+  const handleReserveForTournament = (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => {
+    setTournamentMode(tm);
+    setReservaCancha(null);
+    setTab("reservar");
+  };
 
   const isMain = tab === "canchas";
 
