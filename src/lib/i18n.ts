@@ -371,6 +371,10 @@ export type Translation = {
   deleteTournament: string;
   confirmDeleteTournament: string;
   tournamentDeleted: string;
+  reserveCourtForTournament: string;
+  reserveCourtForTournamentDesc: string;
+  reserveNow: string;
+  tournamentDeletedByCancellation: string;
   tournamentNotFound: string;
   goBack: string;
   organizer: string;
