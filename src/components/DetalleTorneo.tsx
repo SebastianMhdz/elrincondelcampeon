@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { ArrowLeft, Calendar, Users, Award, Phone, Megaphone, Trash2, MapPin, Loader2, LogIn } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarCheck, Users, Award, Phone, Megaphone, Trash2, MapPin, Loader2, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,12 +22,13 @@ interface Props {
   text: import("@/lib/i18n").Translation;
   onBack: () => void;
   onGoAccount: () => void;
+  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
 interface SignupView extends TournamentSignup { _name?: string; _avatar?: string | null; }
 interface AnnView extends TournamentAnnouncement { _name?: string; _avatar?: string | null; }
 
-const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount }: Props) => {
+const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount, onReserveForTournament }: Props) => {
   const { toast } = useToast();
   const [t, setT] = useState<Tournament | null>(null);
   const [canchaName, setCanchaName] = useState<string>("");
@@ -251,6 +252,16 @@ const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount }: Pro
           </ul>
         )}
       </div>
+
+      {isOrganizer && onReserveForTournament && t.status !== "finished" && t.status !== "cancelled" && (
+        <div className="rounded-[22px] border border-accent/30 bg-accent/5 p-5">
+          <h3 className="mb-2 text-sm font-bold text-foreground">🏟️ {text.reserveCourtForTournament}</h3>
+          <p className="mb-3 text-xs text-muted-foreground">{text.reserveCourtForTournamentDesc}</p>
+          <Button onClick={() => onReserveForTournament({ startDate: t.start_date, endDate: t.end_date, canchaId: t.cancha_id, format: t.format, tournamentName: t.name })} className="gap-1.5">
+            <CalendarCheck className="h-4 w-4" /> {text.reserveNow}
+          </Button>
+        </div>
+      )}
 
       {isOrganizer && (
         <div className="rounded-[22px] border border-primary/30 bg-primary/5 p-5">

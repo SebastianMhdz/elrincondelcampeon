@@ -371,6 +371,10 @@ export type Translation = {
   deleteTournament: string;
   confirmDeleteTournament: string;
   tournamentDeleted: string;
+  reserveCourtForTournament: string;
+  reserveCourtForTournamentDesc: string;
+  reserveNow: string;
+  tournamentDeletedByCancellation: string;
   tournamentNotFound: string;
   goBack: string;
   organizer: string;
@@ -671,7 +675,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Publicar anuncio", noAnnouncementsYet: "Aún no hay anuncios.",
     organizerPanel: "Panel del organizador", signupsOpenSwitchLabel: "Inscripciones abiertas", signupsOpenSwitchDesc: "Activa o desactiva la opción de inscribirse.",
     deleteTournament: "Eliminar torneo", confirmDeleteTournament: "¿Eliminar el torneo? Esta acción no se puede deshacer.",
-    tournamentDeleted: "Torneo eliminado", tournamentNotFound: "Torneo no encontrado", goBack: "Volver", organizer: "Organizador",
+    tournamentDeleted: "Torneo eliminado", reserveCourtForTournament: "Reservar cancha para el torneo", reserveCourtForTournamentDesc: "Crea la reserva financiera de la cancha para asegurar las fechas del torneo.", reserveNow: "Reservar ahora", tournamentDeletedByCancellation: "El torneo asociado también ha sido eliminado al cancelar la reserva.", tournamentNotFound: "Torneo no encontrado", goBack: "Volver", organizer: "Organizador",
     missingTeamName: "Falta el nombre", writeTeamName: "Escribe el nombre del equipo",
     registered: "¡Inscrito!", teamRegistered: "Tu equipo quedó registrado en el torneo",
     cannotRegister: "No se pudo inscribir", checkSlots: "Verifica si hay cupos disponibles",
@@ -885,7 +889,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Publish announcement", noAnnouncementsYet: "No announcements yet.",
     organizerPanel: "Organizer panel", signupsOpenSwitchLabel: "Sign-ups open", signupsOpenSwitchDesc: "Toggle the option to sign up.",
     deleteTournament: "Delete tournament", confirmDeleteTournament: "Delete the tournament? This cannot be undone.",
-    tournamentDeleted: "Tournament deleted", tournamentNotFound: "Tournament not found", goBack: "Back", organizer: "Organizer",
+    tournamentDeleted: "Tournament deleted", reserveCourtForTournament: "Reserve court for tournament", reserveCourtForTournamentDesc: "Create the financial reservation to secure the court dates for the tournament.", reserveNow: "Reserve now", tournamentDeletedByCancellation: "The associated tournament has also been deleted upon cancelling the reservation.", tournamentNotFound: "Tournament not found", goBack: "Back", organizer: "Organizer",
     missingTeamName: "Name missing", writeTeamName: "Write your team name",
     registered: "Registered!", teamRegistered: "Your team is registered for the tournament",
     cannotRegister: "Could not register", checkSlots: "Check if there are slots available",
@@ -1099,7 +1103,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Publicar anúncio", noAnnouncementsYet: "Ainda sem anúncios.",
     organizerPanel: "Painel do organizador", signupsOpenSwitchLabel: "Inscrições abertas", signupsOpenSwitchDesc: "Ative ou desative a opção de inscrever-se.",
     deleteTournament: "Excluir torneio", confirmDeleteTournament: "Excluir o torneio? Isto não pode ser desfeito.",
-    tournamentDeleted: "Torneio excluído", tournamentNotFound: "Torneio não encontrado", goBack: "Voltar", organizer: "Organizador",
+    tournamentDeleted: "Torneio excluído", reserveCourtForTournament: "Reservar quadra para o torneio", reserveCourtForTournamentDesc: "Crie a reserva financeira para garantir as datas do torneio.", reserveNow: "Reservar agora", tournamentDeletedByCancellation: "O torneio associado também foi excluído ao cancelar a reserva.", tournamentNotFound: "Torneio não encontrado", goBack: "Voltar", organizer: "Organizador",
     missingTeamName: "Falta o nome", writeTeamName: "Escreva o nome do time",
     registered: "Inscrito!", teamRegistered: "Seu time foi inscrito no torneio",
     cannotRegister: "Não foi possível inscrever", checkSlots: "Verifique se há vagas disponíveis",
@@ -1313,7 +1317,7 @@ export const translations: Record<Locale, Translation> = {
     publishAnnouncement: "Mitteilung veröffentlichen", noAnnouncementsYet: "Noch keine Mitteilungen.",
     organizerPanel: "Organisator-Panel", signupsOpenSwitchLabel: "Anmeldungen offen", signupsOpenSwitchDesc: "Anmeldeoption aktivieren/deaktivieren.",
     deleteTournament: "Turnier löschen", confirmDeleteTournament: "Turnier löschen? Nicht rückgängig zu machen.",
-    tournamentDeleted: "Turnier gelöscht", tournamentNotFound: "Turnier nicht gefunden", goBack: "Zurück", organizer: "Organisator",
+    tournamentDeleted: "Turnier gelöscht", reserveCourtForTournament: "Platz für Turnier reservieren", reserveCourtForTournamentDesc: "Erstellen Sie die finanzielle Reservierung, um die Turnierdaten zu sichern.", reserveNow: "Jetzt reservieren", tournamentDeletedByCancellation: "Das zugehörige Turnier wurde ebenfalls gelöscht.", tournamentNotFound: "Turnier nicht gefunden", goBack: "Zurück", organizer: "Organisator",
     missingTeamName: "Name fehlt", writeTeamName: "Schreibe den Teamnamen",
     registered: "Angemeldet!", teamRegistered: "Dein Team ist für das Turnier angemeldet",
     cannotRegister: "Anmeldung fehlgeschlagen", checkSlots: "Prüfe ob Plätze frei sind",
