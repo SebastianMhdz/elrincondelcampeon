@@ -22,6 +22,7 @@ interface Props {
   text: import("@/lib/i18n").Translation;
   onBack: () => void;
   onGoAccount: () => void;
+  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
 interface SignupView extends TournamentSignup { _name?: string; _avatar?: string | null; }
