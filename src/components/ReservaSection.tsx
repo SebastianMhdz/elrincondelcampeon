@@ -693,11 +693,20 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
               </div>
             </label>
             {/* Event/Tournament */}
-            <label className={`flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm transition ${tournamentMode ? "cursor-not-allowed opacity-60" : "cursor-pointer text-muted-foreground hover:text-foreground hover:border-primary/40"}`}>
+            <label
+              className={`flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-2 text-sm transition ${tournamentMode ? "cursor-not-allowed opacity-60" : "cursor-pointer text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
+              onClick={(e) => {
+                if (!tournamentMode && !extras.includes("eventTournament") && onGoTournaments) {
+                  e.preventDefault();
+                  onGoTournaments();
+                }
+              }}
+            >
               <input type="checkbox" checked={extras.includes("eventTournament")} onChange={() => !tournamentMode && toggleExtra("eventTournament")} disabled={!!tournamentMode} className="accent-primary" />
               <div>
                 <span className="font-medium text-foreground">{text.eventTournament}</span>
                 <span className="ml-1 text-xs text-primary">{text.eventTournamentPrice}</span>
+                {!tournamentMode && <p className="text-[10px] text-muted-foreground">Debes crear primero el torneo en la sección de Torneos</p>}
               </div>
             </label>
           </div>
