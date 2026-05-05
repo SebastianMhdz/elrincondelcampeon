@@ -17,6 +17,7 @@ interface ReservaSectionProps {
   text: Translation;
   user: User | null;
   onGoAccount: () => void;
+  onGoTournaments?: () => void;
   tournamentMode?: {
     startDate: string;
     endDate: string;
