@@ -19,9 +19,11 @@ interface Props {
   canchas: Cancha[];
   onClose: () => void;
   onCreated: () => void;
+  /** After tournament is created, redirect to reservation with tournament data */
+  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
-const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
+const TournamentForm = ({ user, canchas, onClose, onCreated, onReserveForTournament }: Props) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [legacyId, setLegacyId] = useState<string>("");
@@ -36,7 +38,6 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
   const [contactPhone, setContactPhone] = useState("");
   const [signupsOpen, setSignupsOpen] = useState(true);
 
-  // ----- Calendario de disponibilidad (mismo patrón que ReservaSection) -----
   const [calendarMonth, setCalendarMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); return d; });
   const [busySlots, setBusySlots] = useState<Array<{ reservation_date: string }>>([]);
 
@@ -44,12 +45,8 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
   const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
 
-  // Reset format when court changes and current format is not available
   useEffect(() => {
-    if (modalidades.length && !modalidades.includes(format)) {
-      setFormat(modalidades[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (modalidades.length && !modalidades.includes(format)) setFormat(modalidades[0]);
   }, [selectedCancha?.id]);
 
   useEffect(() => {
@@ -69,12 +66,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
 
   const fmtDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const today0 = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
-
-  const busyDays = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of busySlots) set.add(s.reservation_date);
-    return set;
-  }, [busySlots]);
+  const busyDays = useMemo(() => new Set(busySlots.map(s => s.reservation_date)), [busySlots]);
 
   const calendarDays = useMemo(() => {
     const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
@@ -87,13 +79,9 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
   }, [calendarMonth]);
 
   const handleDayClick = (key: string) => {
-    if (!startDate || (startDate && endDate)) {
-      setStartDate(key); setEndDate("");
-    } else if (key < startDate) {
-      setStartDate(key);
-    } else {
-      setEndDate(key);
-    }
+    if (!startDate || (startDate && endDate)) { setStartDate(key); setEndDate(""); }
+    else if (key < startDate) setStartDate(key);
+    else setEndDate(key);
   };
 
   const inRange = (key: string) => startDate && endDate && key >= startDate && key <= endDate;
@@ -113,15 +101,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
     try {
       const { data: c } = await supabase.from("canchas").select("id").eq("legacy_id", Number(legacyId)).maybeSingle();
       if (!c?.id) throw new Error("Cancha no encontrada en la base de datos");
-      const { data: busyReservations } = await supabase
-        .from("reservations")
-        .select("id")
-        .eq("cancha_id", c.id)
-        .eq("status", "confirmed")
-        .gte("reservation_date", startDate)
-        .lte("reservation_date", endDate)
-        .limit(1);
-      if (busyReservations?.length) throw new Error("Ya hay una reserva confirmada en esa cancha durante esas fechas. Elige otra cancha o rango.");
+
       await createTournament({
         cancha_id: c.id,
         organizer_id: user.id,
@@ -138,7 +118,20 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
         status: "scheduled",
         banner_url: null,
       });
-      toast({ title: "Torneo creado", description: "Ya está visible en la pestaña Torneos" });
+
+      toast({ title: "Torneo creado", description: "Ahora debes completar la reserva financiera para confirmar las fechas." });
+
+      // Redirect to reservation flow
+      if (onReserveForTournament) {
+        onReserveForTournament({
+          startDate,
+          endDate,
+          canchaId: c.id,
+          format,
+          tournamentName: name.trim(),
+        });
+      }
+
       onCreated();
     } catch (e: any) {
       toast({ title: "Error", description: e.message ?? "No se pudo crear", variant: "destructive" });
@@ -152,7 +145,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crear torneo</DialogTitle>
-          <DialogDescription>Programa un evento en una cancha. Las fechas seleccionadas bloquearán reservas normales.</DialogDescription>
+          <DialogDescription>Programa un evento en una cancha. Después de crear el torneo serás redirigido a la reserva para confirmar los horarios y el pago.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -212,10 +205,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
                     if (isStart || isEnd) cls += " ring-2 ring-primary";
                     if (isInRange && !isStart && !isEnd) cls += " ring-1 ring-primary/40 bg-primary/10";
                     return (
-                      <button
-                        key={idx} type="button"
-                        disabled={isPast || busy || !dayOpen}
-                        onClick={() => handleDayClick(key)}
+                      <button key={idx} type="button" disabled={isPast || busy || !dayOpen} onClick={() => handleDayClick(key)}
                         className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
                         title={busy ? "Día con reserva confirmada" : !dayOpen ? "Cancha cerrada" : undefined}
                       >
@@ -279,12 +269,16 @@ const TournamentForm = ({ user, canchas, onClose, onCreated }: Props) => {
             </div>
             <Switch checked={signupsOpen} onCheckedChange={setSignupsOpen} />
           </div>
+
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-300">
+            <p><strong>⚠️ Importante:</strong> Después de crear el torneo serás redirigido a la sección de reservas para completar la reserva financiera. Si no completas la reserva, el torneo será cancelado automáticamente.</p>
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear torneo"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear torneo y reservar"}
           </Button>
         </DialogFooter>
       </DialogContent>
