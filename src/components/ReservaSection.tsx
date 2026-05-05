@@ -132,7 +132,7 @@ const EXTRAS_PRICING: Record<string, number> = {
 
 const DRINK_OPTIONS = ["Gatorade", "Coca Cola", "Sprite", "Kola Román", "Cerveza Águila", "Cerveza Águila Light", "Agua embotellada", "Jugo Hit"];
 
-const ReservaSection = ({ initialCancha, text, user, onGoAccount, tournamentMode }: ReservaSectionProps) => {
+const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournaments, tournamentMode }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : tournamentMode?.canchaId ?? "");
   const [nombre, setNombre] = useState(user?.user_metadata?.display_name ?? "");
