@@ -181,6 +181,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
                 <Button onClick={saveBranding} disabled={savingBranding} className="bg-primary text-primary-foreground">{savingBranding ? "..." : text.saveChanges}</Button>
                 <CanchaAdminPanel />
                 <PanelBasesDatosAdmin />
+                <PanelBaneosAdmin />
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">{text.adminOnlyMessage}</div>
