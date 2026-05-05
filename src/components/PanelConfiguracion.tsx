@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import CanchaAdminPanel from "@/components/PanelAdminCanchas";
 import PanelBasesDatosAdmin from "@/components/PanelBasesDatosAdmin";
+import PanelBaneosAdmin from "@/components/PanelBaneosAdmin";
 
 interface SettingsPanelProps {
   locale: Locale;
