@@ -13,9 +13,10 @@ interface Props {
   text: Translation;
   onSelectTournament: (id: string) => void;
   onGoAccount: () => void;
+  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
-const TorneosSection = ({ user, text, onSelectTournament, onGoAccount }: Props) => {
+const TorneosSection = ({ user, text, onSelectTournament, onGoAccount, onReserveForTournament }: Props) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [canchas, setCanchas] = useState<Cancha[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -119,6 +120,7 @@ const TorneosSection = ({ user, text, onSelectTournament, onGoAccount }: Props) 
           canchas={canchas}
           onClose={() => setCreating(false)}
           onCreated={() => { setCreating(false); load(); }}
+          onReserveForTournament={onReserveForTournament}
         />
       )}
     </div>

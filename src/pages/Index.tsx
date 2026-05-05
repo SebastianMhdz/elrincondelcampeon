@@ -100,10 +100,10 @@ const Index = () => {
             {tab === "canchas" && <CanchasSection onMapSelect={handleMapSelect} onReserveSelect={handleReserveSelect} text={text} user={user} onGoAccount={() => setTab("cuenta")} />}
             {tab === "torneos" && (selectedTournament
               ? <TournamentDetail tournamentId={selectedTournament} user={user} text={text} onBack={() => setSelectedTournament(null)} onGoAccount={() => setTab("cuenta")} onReserveForTournament={handleReserveForTournament} />
-              : <TorneosSection user={user} text={text} onSelectTournament={handleSelectTournament} onGoAccount={() => setTab("cuenta")} />)}
+              : <TorneosSection user={user} text={text} onSelectTournament={handleSelectTournament} onGoAccount={() => setTab("cuenta")} onReserveForTournament={handleReserveForTournament} />)}
             {tab === "mapa" && <MapSection initialCancha={mapCancha} text={text} />}
             {tab === "rutas" && <RutasSection initialCancha={mapCancha} text={text} />}
-            {tab === "reservar" && <ReservaSection initialCancha={reservaCancha} text={text} user={user} onGoAccount={() => setTab("cuenta")} tournamentMode={tournamentMode} />}
+            {tab === "reservar" && <ReservaSection initialCancha={reservaCancha} text={text} user={user} onGoAccount={() => setTab("cuenta")} onGoTournaments={() => setTab("torneos")} tournamentMode={tournamentMode} />}
             {tab === "mis-reservas" && <MisReservasSection text={text} user={user} onGoAccount={() => setTab("cuenta")} />}
             {tab === "soporte" && <SoporteSection text={text} />}
             {tab === "cuenta" && <AccountSection text={text} user={user} />}

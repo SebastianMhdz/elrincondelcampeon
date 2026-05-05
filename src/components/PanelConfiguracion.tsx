@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import CanchaAdminPanel from "@/components/PanelAdminCanchas";
 import PanelBasesDatosAdmin from "@/components/PanelBasesDatosAdmin";
+import PanelBaneosAdmin from "@/components/PanelBaneosAdmin";
 
 interface SettingsPanelProps {
   locale: Locale;
@@ -180,6 +181,7 @@ const SettingsPanel = ({ locale, onLocaleChange, darkMode, onDarkModeChange, tex
                 <Button onClick={saveBranding} disabled={savingBranding} className="bg-primary text-primary-foreground">{savingBranding ? "..." : text.saveChanges}</Button>
                 <CanchaAdminPanel />
                 <PanelBasesDatosAdmin />
+                <PanelBaneosAdmin />
               </>
             ) : (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">{text.adminOnlyMessage}</div>
