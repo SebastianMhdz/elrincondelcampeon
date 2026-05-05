@@ -120,6 +120,7 @@ const TorneosSection = ({ user, text, onSelectTournament, onGoAccount, onReserve
           canchas={canchas}
           onClose={() => setCreating(false)}
           onCreated={() => { setCreating(false); load(); }}
+          onReserveForTournament={onReserveForTournament}
         />
       )}
     </div>
