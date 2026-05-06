@@ -636,7 +636,49 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
               <li className="sm:col-span-2"><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/30 align-middle" />{text.legendClosedDay}</li>
             </ul>
 
-            {fecha ? (() => {
+            {tournamentMode && (
+              <div className="mt-4 space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Días fijos del torneo</p>
+                    <p className="text-[11px] text-muted-foreground">Las fechas vienen del torneo y no se pueden cambiar; solo elige las horas.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-xs">
+                    <button type="button" onClick={() => setTournamentScheduleMode("preset")} className={`rounded-md px-2 py-1 font-semibold ${tournamentScheduleMode === "preset" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Predeterminado</button>
+                    <button type="button" onClick={() => setTournamentScheduleMode("custom")} className={`rounded-md px-2 py-1 font-semibold ${tournamentScheduleMode === "custom" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Personalizado</button>
+                  </div>
+                </div>
+                {tournamentScheduleMode === "preset" ? (
+                  <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+                    <p>Se aplicará <strong className="text-foreground">{hora} — {endLabel} ({dur}h)</strong> a cada día del torneo.</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {tournamentDates.map((d) => <span key={d} className="rounded-full bg-primary/10 px-2 py-1 font-semibold text-primary">{d}</span>)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {tournamentDates.map((d) => {
+                      const dayHour = customTournamentTimes[d]?.hour ?? hora;
+                      const dayDur = customTournamentTimes[d]?.duration ?? duracion;
+                      const dayDurNum = Math.min(Number(dayDur) || 1, maxDuration);
+                      return (
+                        <div key={d} className="grid gap-2 rounded-lg border border-border bg-card p-2 text-xs sm:grid-cols-[1fr_1fr_1fr] sm:items-center">
+                          <p className="font-semibold text-foreground">{d}</p>
+                          <select value={dayHour} onChange={(e) => setCustomTournamentTimes((prev) => ({ ...prev, [d]: { hour: e.target.value, duration: dayDur } }))} className="rounded-md border border-border bg-background px-2 py-1.5 text-foreground">
+                            {horas.map((h) => <option key={h} value={h} disabled={isHourDisabledForDate(d, h, dayDurNum)}>{h}{isHourDisabledForDate(d, h, dayDurNum) ? ` · ${text.occupied}` : ""}</option>)}
+                          </select>
+                          <select value={dayDur} onChange={(e) => setCustomTournamentTimes((prev) => ({ ...prev, [d]: { hour: dayHour, duration: e.target.value } }))} className="rounded-md border border-border bg-background px-2 py-1.5 text-foreground">
+                            {[1, 2, 3, 4, 5, 6].slice(0, maxDuration).map((n) => <option key={n} value={String(n)}>{n}h</option>)}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!tournamentMode && (fecha ? (() => {
               const selDate = new Date(`${fecha}T00:00:00`);
               const dayOpen = isDayOpen(schedule, selDate);
               if (!dayOpen) return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
