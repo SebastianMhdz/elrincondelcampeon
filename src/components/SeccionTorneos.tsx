@@ -13,7 +13,7 @@ interface Props {
   text: Translation;
   onSelectTournament: (id: string) => void;
   onGoAccount: () => void;
-  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
+  onReserveForTournament?: (tm: { tournamentId?: string; startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
 const TorneosSection = ({ user, text, onSelectTournament, onGoAccount, onReserveForTournament }: Props) => {

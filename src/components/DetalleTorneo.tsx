@@ -22,7 +22,7 @@ interface Props {
   text: import("@/lib/i18n").Translation;
   onBack: () => void;
   onGoAccount: () => void;
-  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
+  onReserveForTournament?: (tm: { tournamentId?: string; startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
 interface SignupView extends TournamentSignup { _name?: string; _avatar?: string | null; }
@@ -257,7 +257,7 @@ const TournamentDetail = ({ tournamentId, user, text, onBack, onGoAccount, onRes
         <div className="rounded-[22px] border border-accent/30 bg-accent/5 p-5">
           <h3 className="mb-2 text-sm font-bold text-foreground">🏟️ {text.reserveCourtForTournament}</h3>
           <p className="mb-3 text-xs text-muted-foreground">{text.reserveCourtForTournamentDesc}</p>
-          <Button onClick={() => onReserveForTournament({ startDate: t.start_date, endDate: t.end_date, canchaId: t.cancha_id, format: t.format, tournamentName: t.name })} className="gap-1.5">
+          <Button onClick={() => onReserveForTournament({ tournamentId: t.id, startDate: t.start_date, endDate: t.end_date, canchaId: t.cancha_id, format: t.format, tournamentName: t.name })} className="gap-1.5">
             <CalendarCheck className="h-4 w-4" /> {text.reserveNow}
           </Button>
         </div>

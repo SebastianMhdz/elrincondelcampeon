@@ -19,12 +19,14 @@ interface ReservaSectionProps {
   onGoAccount: () => void;
   onGoTournaments?: () => void;
   tournamentMode?: {
+    tournamentId?: string;
     startDate: string;
     endDate: string;
     canchaId: string;
     format: string;
     tournamentName: string;
   } | null;
+  onTournamentReserved?: () => void;
 }
 
 const horas = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM"];
@@ -132,7 +134,23 @@ const EXTRAS_PRICING: Record<string, number> = {
 
 const DRINK_OPTIONS = ["Gatorade", "Coca Cola", "Sprite", "Kola Román", "Cerveza Águila", "Cerveza Águila Light", "Agua embotellada", "Jugo Hit"];
 
-const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournaments, tournamentMode }: ReservaSectionProps) => {
+type ReservationPlan = { date: string; hour: string; duration: number };
+
+const datesBetween = (start: string, end: string) => {
+  if (!start || !end) return [];
+  const out: string[] = [];
+  const cur = new Date(`${start}T00:00:00`);
+  const last = new Date(`${end}T00:00:00`);
+  while (!Number.isNaN(cur.getTime()) && cur <= last && out.length < 370) {
+    out.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+};
+
+const intervalsOverlap = (aStart: number, aEnd: number, bStart: number, bEnd: number) => aStart < bEnd && bStart < aEnd;
+
+const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournaments, tournamentMode, onTournamentReserved }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : tournamentMode?.canchaId ?? "");
   const [nombre, setNombre] = useState(user?.user_metadata?.display_name ?? "");
@@ -159,6 +177,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const [recurringEndDate, setRecurringEndDate] = useState("");
   // Drink selection
   const [selectedDrink, setSelectedDrink] = useState(DRINK_OPTIONS[0]);
+  const [drinkQuantity, setDrinkQuantity] = useState(1);
+  const [tournamentScheduleMode, setTournamentScheduleMode] = useState<"preset" | "custom">("preset");
+  const [customTournamentTimes, setCustomTournamentTimes] = useState<Record<string, { hour: string; duration: string }>>({});
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
@@ -207,6 +228,26 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
 
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
   const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
+
+  const tournamentDates = useMemo(() => tournamentMode ? datesBetween(tournamentMode.startDate, tournamentMode.endDate) : [], [tournamentMode]);
+  const reservationPlan = useMemo<ReservationPlan[]>(() => {
+    if (!tournamentMode) return fecha ? [{ date: fecha, hour: hora, duration: Math.min(Number(duracion) || 1, maxDuration) }] : [];
+    return tournamentDates.map((date) => ({
+      date,
+      hour: tournamentScheduleMode === "custom" ? (customTournamentTimes[date]?.hour ?? hora) : hora,
+      duration: Math.min(Number(tournamentScheduleMode === "custom" ? (customTournamentTimes[date]?.duration ?? duracion) : duracion) || 1, maxDuration),
+    }));
+  }, [tournamentMode, tournamentDates, tournamentScheduleMode, customTournamentTimes, hora, duracion, fecha, maxDuration]);
+
+  useEffect(() => {
+    if (!tournamentMode) return;
+    setCanchaId(tournamentMode.canchaId);
+    setFecha(tournamentMode.startDate);
+    setJugadores(tournamentMode.format);
+    setExtras((prev) => prev.includes("eventTournament") ? prev : [...prev, "eventTournament"]);
+    setNota(`Torneo: ${tournamentMode.tournamentName}`);
+    setCalendarMonth(new Date(`${tournamentMode.startDate}T00:00:00`));
+  }, [tournamentMode]);
 
   useEffect(() => {
     if (modalidades.length && !modalidades.includes(jugadores)) {
@@ -268,12 +309,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
     for (const e of extras) {
       if (e === "vest") total += EXTRAS_PRICING.vest;
       else if (e === "ball") total += EXTRAS_PRICING.ball;
-      else if (e === "refreshment") total += EXTRAS_PRICING.refreshment;
+      else if (e === "refreshment") total += EXTRAS_PRICING.refreshment * drinkQuantity;
       else if (e === "lockerRoom") total += EXTRAS_PRICING.lockerRoom;
       else if (e === "eventTournament") total += EXTRAS_PRICING.eventTournament;
     }
     return total;
-  }, [extras]);
+  }, [extras, drinkQuantity]);
 
   if (!user) {
     return (
@@ -289,31 +330,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const toggleExtra = (e: string) => setExtras((prev) => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
 
   const handleSubmit = async () => {
-    if (!nombre || !email || !tel || !fecha || canchaId === "") {
+    if (!nombre || !email || !tel || canchaId === "" || reservationPlan.length === 0) {
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
     if (containsProfanity(nota) || containsProfanity(nombre)) {
       toast({ title: text.errorTitle, description: text.profanityWarning, variant: "destructive" });
-      return;
-    }
-    if (fecha < todayISO()) {
-      toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
-      return;
-    }
-    const startMin = hourLabelToMinutes(hora);
-    if (isTodayISO(fecha) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
-      toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
-      return;
-    }
-    const selDate = new Date(`${fecha}T00:00:00`);
-    const dur = Math.min(Number(duracion) || 1, maxDuration);
-    let withinSchedule = true;
-    for (let i = 0; i < dur; i++) {
-      if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
-    }
-    if (!withinSchedule) {
-      toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
       return;
     }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
@@ -324,47 +346,84 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
       setSending(false); return;
     }
 
+    const minDate = reservationPlan.reduce((min, p) => p.date < min ? p.date : min, reservationPlan[0].date);
+    const maxDate = reservationPlan.reduce((max, p) => p.date > max ? p.date : max, reservationPlan[0].date);
+    const { data: liveBusy } = await supabase.rpc("get_cancha_busy_slots", { _cancha_id: canchaDb.id, _from: minDate, _to: maxDate });
+    for (const plan of reservationPlan) {
+      if (plan.date < todayISO()) {
+        toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
+        setSending(false); return;
+      }
+      const startMin = hourLabelToMinutes(plan.hour);
+      if (isTodayISO(plan.date) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
+        toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
+        setSending(false); return;
+      }
+      const selDate = new Date(`${plan.date}T00:00:00`);
+      for (let i = 0; i < plan.duration; i++) {
+        if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) {
+          toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
+          setSending(false); return;
+        }
+      }
+      const blocked = ((liveBusy as any[]) ?? []).some((slot) => {
+        if (slot.reservation_date !== plan.date) return false;
+        const [hh, mm] = String(slot.start_time).split(":").map(Number);
+        return intervalsOverlap(startMin, startMin + plan.duration * 60, hh * 60 + (mm || 0), hh * 60 + (mm || 0) + (slot.duration_hours || 1) * 60);
+      });
+      if (blocked) {
+        toast({ title: text.slotUnavailable, description: `${text.slotUnavailableDesc} (${plan.date} ${plan.hour})`, variant: "destructive" });
+        setSending(false); return;
+      }
+    }
+
     // Build extras labels for email
     const extrasLabels = extras.map(e => {
       if (e === "vest") return `${text.vest} (${text.vestPrice})`;
       if (e === "ball") return `${text.ball} (${text.ballPrice})`;
-      if (e === "refreshment") return `${text.refreshment}: ${selectedDrink} (${text.refreshmentPrice})`;
+      if (e === "refreshment") return `${text.refreshment}: ${selectedDrink} x${drinkQuantity} (${formatCOP(EXTRAS_PRICING.refreshment * drinkQuantity)})`;
       if (e === "lockerRoom") return `${text.lockerRoom} (${text.lockerRoomPrice})`;
       if (e === "eventTournament") return `${text.eventTournament} (${text.eventTournamentPrice})`;
       return e;
     });
 
-    const { error: reservationError } = await supabase.from("reservations").insert({
+    const rows = reservationPlan.map((plan) => ({
       cancha_id: canchaDb.id,
       user_id: user.id,
       customer_name: nombre,
       customer_email: email,
       customer_phone: tel,
-      reservation_date: fecha,
-      start_time: `${convertHourTo24(hora)}:00`,
-      duration_hours: dur,
+      reservation_date: plan.date,
+      start_time: `${convertHourTo24(plan.hour)}:00`,
+      duration_hours: plan.duration,
       format_label: jugadores,
       extras: extrasLabels,
       note: nota || null,
-    });
+    }));
+    const { error: reservationError } = await supabase.from("reservations").insert(rows);
     if (reservationError) {
-      toast({ title: text.slotUnavailable, description: text.slotUnavailableDesc, variant: "destructive" });
+      if (tournamentMode?.tournamentId) await supabase.from("tournaments").delete().eq("id", tournamentMode.tournamentId);
+      toast({ title: text.slotUnavailable, description: reservationError.message || text.slotUnavailableDesc, variant: "destructive" });
       setSending(false); return;
     }
 
-    const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
-    const totalPrice = breakdown.total + extrasTotal;
+    const planBreakdowns = reservationPlan.map((plan) => ({ ...plan, breakdown: computeBreakdown(canchaDb.hourly_pricing as any, plan.hour, plan.duration, canchaDb.precio) }));
+    const courtTotal = planBreakdowns.reduce((sum, item) => sum + item.breakdown.total, 0);
+    const totalPrice = courtTotal + extrasTotal;
     const deposit = Math.round(totalPrice * 0.30);
 
-    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
-    const message = `Reserva de ${cancha.name}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nExtras: ${extrasLabels.join(", ") || "—"}\nTotal cancha: ${formatCOP(breakdown.total)}\nExtras: ${formatCOP(extrasTotal)}\nTotal: ${formatCOP(totalPrice)}\nDepósito 30%: ${formatCOP(deposit)}`;
+    if (tournamentMode?.tournamentId) await supabase.from("tournaments").update({ status: "scheduled", signups_open: true }).eq("id", tournamentMode.tournamentId);
+    const totalHours = reservationPlan.reduce((sum, plan) => sum + plan.duration, 0);
+    const scheduleText = planBreakdowns.map((item) => `${item.date}: ${item.hour} — ${minutesToLabel(hourLabelToMinutes(item.hour) + item.duration * 60)} (${item.duration}h)`).join("\n");
+    const desglose = planBreakdowns.map((item) => `${item.date}: ${item.breakdown.perHour.map(p => `${p.label} ${formatCOP(p.price)}`).join(" | ")}`).join("\n");
+    const message = `${tournamentMode ? `Reserva financiera de torneo: ${tournamentMode.tournamentName}` : `Reserva de ${cancha.name}`}\nCancha: ${cancha.name}\nHorarios:\n${scheduleText}\nHoras totales: ${totalHours}h\nExtras: ${extrasLabels.join(", ") || "—"}\nTotal cancha: ${formatCOP(courtTotal)}\nExtras: ${formatCOP(extrasTotal)}\nTotal: ${formatCOP(totalPrice)}\nDepósito 30%: ${formatCOP(deposit)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
-        fecha, hora, duracion: `${dur}h`, jugadores, extras: extrasLabels.join(", ") || "—",
-        nota: nota || "—", precio: `Total: ${formatCOP(totalPrice)} (Cancha: ${formatCOP(breakdown.total)} + Extras: ${formatCOP(extrasTotal)})`,
+        fecha: tournamentMode ? `${tournamentMode.startDate} → ${tournamentMode.endDate}` : reservationPlan[0].date, hora: reservationPlan[0].hour, duracion: `${totalHours}h`, jugadores, extras: extrasLabels.join(", ") || "—",
+        nota: nota || "—", precio: `Total: ${formatCOP(totalPrice)} (Cancha: ${formatCOP(courtTotal)} + Extras: ${formatCOP(extrasTotal)})`,
         phone: cancha.phone, message,
-        precio_hora: formatCOP(Math.round(breakdown.total / dur)),
+        precio_hora: formatCOP(Math.round(courtTotal / Math.max(totalHours, 1))),
         precio_total: formatCOP(totalPrice),
         deposito: formatCOP(deposit),
         saldo: formatCOP(totalPrice - deposit),
@@ -376,6 +435,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
     setLastDeposit(deposit);
     setLastTotal(totalPrice);
     setSent(true);
+    onTournamentReserved?.();
     setSending(false);
   };
 
@@ -469,16 +529,38 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const startMin = hourLabelToMinutes(hora);
   const endMin = startMin + dur * 60;
   const endLabel = minutesToLabel(endMin);
+  const isTournamentDate = (key: string) => tournamentDates.includes(key);
+  const occupiedLabelsForDate = (date: string) => {
+    const set = new Set<string>();
+    for (const slot of busySlots) {
+      if (slot.reservation_date !== date) continue;
+      const [hh, mm] = slot.start_time.split(":").map(Number);
+      const start = hh * 60 + (mm || 0);
+      for (let i = 0; i < (slot.duration_hours || 1); i++) set.add(minutesToLabel(start + i * 60));
+    }
+    return set;
+  };
+  const isHourDisabledForDate = (date: string, hour: string, durationValue = dur) => {
+    const mins = hourLabelToMinutes(hour);
+    const selDate = new Date(`${date}T00:00:00`);
+    const occ = occupiedLabelsForDate(date);
+    const tooSoon = isTodayISO(date) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+    for (let i = 0; i < durationValue; i++) {
+      const h = minutesToLabel(mins + i * 60);
+      if (occ.has(h) || !isOpenAt(schedule, selDate, (mins + i * 60) % 1440)) return true;
+    }
+    return tooSoon;
+  };
 
   // Build set of hours covered by current selection for multi-hour highlight
-  const selectedHourSet = useMemo(() => {
+  const selectedHourSet = (() => {
     const set = new Set<string>();
     if (!hora || !fecha) return set;
     for (let i = 0; i < dur; i++) {
       set.add(minutesToLabel(startMin + i * 60));
     }
     return set;
-  }, [hora, dur, startMin, fecha]);
+  })();
 
   return (
     <div className="section-sport-panel rounded-[22px] p-4 sm:p-5 md:p-6">
@@ -527,17 +609,19 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
                 const allBusy = occ >= totalSlotsPerDay;
                 const someBusy = occ > 0 && !allBusy;
                 const selected = fecha === key;
+                const lockedTournamentDay = isTournamentDate(key);
                 let cls = "border-border bg-card text-foreground hover:bg-accent";
                 if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
                 else if (!dayOpen) cls = "border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,hsl(var(--muted-foreground)/0.15)_3px,hsl(var(--muted-foreground)/0.15)_5px)]";
                 else if (allBusy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
                 else if (someBusy) cls = "border-orange-500/50 bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25";
                 else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
+                if (lockedTournamentDay) cls = "border-primary bg-primary/15 text-primary ring-1 ring-primary/50";
                 if (selected) cls += " ring-2 ring-primary";
                 return (
-                  <button key={idx} type="button" disabled={isPast || allBusy || !dayOpen} onClick={() => setFecha(key)}
+                  <button key={idx} type="button" disabled={!!tournamentMode || isPast || allBusy || !dayOpen} onClick={() => setFecha(key)}
                     className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
-                    title={!dayOpen ? text.courtClosedDay : undefined}
+                    title={tournamentMode && lockedTournamentDay ? "Día fijo del torneo" : !dayOpen ? text.courtClosedDay : undefined}
                   >
                     {cell.date.getDate()}
                   </button>
@@ -552,7 +636,49 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
               <li className="sm:col-span-2"><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/30 align-middle" />{text.legendClosedDay}</li>
             </ul>
 
-            {fecha ? (() => {
+            {tournamentMode && (
+              <div className="mt-4 space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Días fijos del torneo</p>
+                    <p className="text-[11px] text-muted-foreground">Las fechas vienen del torneo y no se pueden cambiar; solo elige las horas.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 text-xs">
+                    <button type="button" onClick={() => setTournamentScheduleMode("preset")} className={`rounded-md px-2 py-1 font-semibold ${tournamentScheduleMode === "preset" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Predeterminado</button>
+                    <button type="button" onClick={() => setTournamentScheduleMode("custom")} className={`rounded-md px-2 py-1 font-semibold ${tournamentScheduleMode === "custom" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Personalizado</button>
+                  </div>
+                </div>
+                {tournamentScheduleMode === "preset" ? (
+                  <div className="rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+                    <p>Se aplicará <strong className="text-foreground">{hora} — {endLabel} ({dur}h)</strong> a cada día del torneo.</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {tournamentDates.map((d) => <span key={d} className="rounded-full bg-primary/10 px-2 py-1 font-semibold text-primary">{d}</span>)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {tournamentDates.map((d) => {
+                      const dayHour = customTournamentTimes[d]?.hour ?? hora;
+                      const dayDur = customTournamentTimes[d]?.duration ?? duracion;
+                      const dayDurNum = Math.min(Number(dayDur) || 1, maxDuration);
+                      return (
+                        <div key={d} className="grid gap-2 rounded-lg border border-border bg-card p-2 text-xs sm:grid-cols-[1fr_1fr_1fr] sm:items-center">
+                          <p className="font-semibold text-foreground">{d}</p>
+                          <select value={dayHour} onChange={(e) => setCustomTournamentTimes((prev) => ({ ...prev, [d]: { hour: e.target.value, duration: dayDur } }))} className="rounded-md border border-border bg-background px-2 py-1.5 text-foreground">
+                            {horas.map((h) => <option key={h} value={h} disabled={isHourDisabledForDate(d, h, dayDurNum)}>{h}{isHourDisabledForDate(d, h, dayDurNum) ? ` · ${text.occupied}` : ""}</option>)}
+                          </select>
+                          <select value={dayDur} onChange={(e) => setCustomTournamentTimes((prev) => ({ ...prev, [d]: { hour: dayHour, duration: e.target.value } }))} className="rounded-md border border-border bg-background px-2 py-1.5 text-foreground">
+                            {[1, 2, 3, 4, 5, 6].slice(0, maxDuration).map((n) => <option key={n} value={String(n)}>{n}h</option>)}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!tournamentMode && (fecha ? (() => {
               const selDate = new Date(`${fecha}T00:00:00`);
               const dayOpen = isDayOpen(schedule, selDate);
               if (!dayOpen) return <p className="mt-3 text-xs text-red-500">{text.courtClosedDay}</p>;
@@ -598,7 +724,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
               );
             })() : (
               <p className="mt-3 text-xs text-muted-foreground">{text.pickDateToSeeHours}</p>
-            )}
+            ))}
           </div>
         )}
 
@@ -608,7 +734,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><label className={labelClass}>{text.cellphone}</label><input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder={text.cellphonePlaceholder} className={inputClass} /></div>
-          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} disabled={!!tournamentMode} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -679,9 +805,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
                 </div>
               </label>
               {extras.includes("refreshment") && (
-                <select value={selectedDrink} onChange={(e) => setSelectedDrink(e.target.value)} className="mt-2 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground">
-                  {DRINK_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
+                <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                  <select value={selectedDrink} onChange={(e) => setSelectedDrink(e.target.value)} className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground">
+                    {DRINK_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select value={drinkQuantity} onChange={(e) => setDrinkQuantity(Number(e.target.value))} className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground" aria-label="Cantidad de bebidas">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>x{n}</option>)}
+                  </select>
+                </div>
               )}
             </div>
             {/* Locker room */}
@@ -718,18 +849,21 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
         {(() => {
           const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
           if (!cdb) return null;
-          const bd = computeBreakdown(cdb.hourly_pricing as any, hora, dur, cdb.precio);
-          const courtTotal = bd.total;
+          const planBreakdowns = reservationPlan.map((plan) => ({ ...plan, breakdown: computeBreakdown(cdb.hourly_pricing as any, plan.hour, plan.duration, cdb.precio) }));
+          const courtTotal = planBreakdowns.reduce((sum, item) => sum + item.breakdown.total, 0);
           const grandTotal = courtTotal + extrasTotal;
           if (grandTotal <= 0) return null;
           const dep = Math.round(grandTotal * 0.30);
-          const varies = new Set(bd.perHour.map(p => p.price)).size > 1;
+          const varies = new Set(planBreakdowns.flatMap(item => item.breakdown.perHour.map(p => p.price))).size > 1;
           return (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
               <p className="mb-1 font-semibold text-foreground">{text.paymentSummary}</p>
               <ul className="mb-1 space-y-0.5 text-xs text-muted-foreground">
-                {bd.perHour.map((p, i) => (
-                  <li key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></li>
+                {planBreakdowns.map((item) => (
+                  <li key={item.date} className="rounded-md bg-card/60 p-2">
+                    <p className="mb-1 font-semibold text-foreground">{item.date} · {item.hour} — {minutesToLabel(hourLabelToMinutes(item.hour) + item.duration * 60)} ({item.duration}h)</p>
+                    {item.breakdown.perHour.map((p, i) => <div key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></div>)}
+                  </li>
                 ))}
               </ul>
               {varies && <p className="text-[11px] text-primary">{text.variesByHour}</p>}

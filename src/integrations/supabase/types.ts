@@ -605,14 +605,24 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_reservation_slot_available: {
-        Args: {
-          _cancha_id: string
-          _reservation_date: string
-          _start_time: string
-        }
-        Returns: boolean
-      }
+      is_reservation_slot_available:
+        | {
+            Args: {
+              _cancha_id: string
+              _reservation_date: string
+              _start_time: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _cancha_id: string
+              _duration_hours: number
+              _reservation_date: string
+              _start_time: string
+            }
+            Returns: boolean
+          }
       refresh_cancha_review_stats: {
         Args: { _cancha_id: string }
         Returns: undefined
