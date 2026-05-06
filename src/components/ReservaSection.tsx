@@ -724,7 +724,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
               );
             })() : (
               <p className="mt-3 text-xs text-muted-foreground">{text.pickDateToSeeHours}</p>
-            )}
+            ))}
           </div>
         )}
 
