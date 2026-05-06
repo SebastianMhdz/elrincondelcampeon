@@ -20,7 +20,7 @@ interface Props {
   onClose: () => void;
   onCreated: () => void;
   /** After tournament is created, redirect to reservation with tournament data */
-  onReserveForTournament?: (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
+  onReserveForTournament?: (tm: { tournamentId?: string; startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => void;
 }
 
 const TournamentForm = ({ user, canchas, onClose, onCreated, onReserveForTournament }: Props) => {
@@ -102,7 +102,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated, onReserveForTournam
       const { data: c } = await supabase.from("canchas").select("id").eq("legacy_id", Number(legacyId)).maybeSingle();
       if (!c?.id) throw new Error("Cancha no encontrada en la base de datos");
 
-      await createTournament({
+      const tournament = await createTournament({
         cancha_id: c.id,
         organizer_id: user.id,
         name: name.trim(),
@@ -114,8 +114,8 @@ const TournamentForm = ({ user, canchas, onClose, onCreated, onReserveForTournam
         prize: prize.trim() || null,
         entry_fee: entryFee.trim() || null,
         contact_phone: contactPhone.trim() || null,
-        signups_open: signupsOpen,
-        status: "scheduled",
+        signups_open: false,
+        status: "cancelled",
         banner_url: null,
       });
 
@@ -124,6 +124,7 @@ const TournamentForm = ({ user, canchas, onClose, onCreated, onReserveForTournam
       // Redirect to reservation flow
       if (onReserveForTournament) {
         onReserveForTournament({
+          tournamentId: tournament.id,
           startDate,
           endDate,
           canchaId: c.id,
