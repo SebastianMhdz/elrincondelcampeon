@@ -734,7 +734,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><label className={labelClass}>{text.cellphone}</label><input type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder={text.cellphonePlaceholder} className={inputClass} /></div>
-          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>{text.date}</label><input type="date" value={fecha} min={todayISO()} onChange={(e) => setFecha(e.target.value)} disabled={!!tournamentMode} className={inputClass} /></div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -849,18 +849,21 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
         {(() => {
           const cdb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
           if (!cdb) return null;
-          const bd = computeBreakdown(cdb.hourly_pricing as any, hora, dur, cdb.precio);
-          const courtTotal = bd.total;
+          const planBreakdowns = reservationPlan.map((plan) => ({ ...plan, breakdown: computeBreakdown(cdb.hourly_pricing as any, plan.hour, plan.duration, cdb.precio) }));
+          const courtTotal = planBreakdowns.reduce((sum, item) => sum + item.breakdown.total, 0);
           const grandTotal = courtTotal + extrasTotal;
           if (grandTotal <= 0) return null;
           const dep = Math.round(grandTotal * 0.30);
-          const varies = new Set(bd.perHour.map(p => p.price)).size > 1;
+          const varies = new Set(planBreakdowns.flatMap(item => item.breakdown.perHour.map(p => p.price))).size > 1;
           return (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
               <p className="mb-1 font-semibold text-foreground">{text.paymentSummary}</p>
               <ul className="mb-1 space-y-0.5 text-xs text-muted-foreground">
-                {bd.perHour.map((p, i) => (
-                  <li key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></li>
+                {planBreakdowns.map((item) => (
+                  <li key={item.date} className="rounded-md bg-card/60 p-2">
+                    <p className="mb-1 font-semibold text-foreground">{item.date} · {item.hour} — {minutesToLabel(hourLabelToMinutes(item.hour) + item.duration * 60)} ({item.duration}h)</p>
+                    {item.breakdown.perHour.map((p, i) => <div key={i} className="flex justify-between"><span>{p.label}</span><span className="text-foreground">{formatCOP(p.price)}</span></div>)}
+                  </li>
                 ))}
               </ul>
               {varies && <p className="text-[11px] text-primary">{text.variesByHour}</p>}
