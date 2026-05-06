@@ -609,17 +609,19 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
                 const allBusy = occ >= totalSlotsPerDay;
                 const someBusy = occ > 0 && !allBusy;
                 const selected = fecha === key;
+                const lockedTournamentDay = isTournamentDate(key);
                 let cls = "border-border bg-card text-foreground hover:bg-accent";
                 if (isPast) cls = "border-border bg-muted text-muted-foreground/50 cursor-not-allowed";
                 else if (!dayOpen) cls = "border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed [background-image:repeating-linear-gradient(45deg,transparent,transparent_3px,hsl(var(--muted-foreground)/0.15)_3px,hsl(var(--muted-foreground)/0.15)_5px)]";
                 else if (allBusy) cls = "border-red-500/50 bg-red-500/15 text-red-600 dark:text-red-400 cursor-not-allowed";
                 else if (someBusy) cls = "border-orange-500/50 bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/25";
                 else cls = "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20";
+                if (lockedTournamentDay) cls = "border-primary bg-primary/15 text-primary ring-1 ring-primary/50";
                 if (selected) cls += " ring-2 ring-primary";
                 return (
-                  <button key={idx} type="button" disabled={isPast || allBusy || !dayOpen} onClick={() => setFecha(key)}
+                  <button key={idx} type="button" disabled={!!tournamentMode || isPast || allBusy || !dayOpen} onClick={() => setFecha(key)}
                     className={`aspect-square rounded-md border text-xs font-semibold transition ${cls}`}
-                    title={!dayOpen ? text.courtClosedDay : undefined}
+                    title={tournamentMode && lockedTournamentDay ? "Día fijo del torneo" : !dayOpen ? text.courtClosedDay : undefined}
                   >
                     {cell.date.getDate()}
                   </button>
