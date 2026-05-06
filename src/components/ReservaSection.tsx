@@ -553,14 +553,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   };
 
   // Build set of hours covered by current selection for multi-hour highlight
-  const selectedHourSet = useMemo(() => {
+  const selectedHourSet = (() => {
     const set = new Set<string>();
     if (!hora || !fecha) return set;
     for (let i = 0; i < dur; i++) {
       set.add(minutesToLabel(startMin + i * 60));
     }
     return set;
-  }, [hora, dur, startMin, fecha]);
+  })();
 
   return (
     <div className="section-sport-panel rounded-[22px] p-4 sm:p-5 md:p-6">
