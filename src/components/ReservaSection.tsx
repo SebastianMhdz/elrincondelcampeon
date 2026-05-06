@@ -309,12 +309,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
     for (const e of extras) {
       if (e === "vest") total += EXTRAS_PRICING.vest;
       else if (e === "ball") total += EXTRAS_PRICING.ball;
-      else if (e === "refreshment") total += EXTRAS_PRICING.refreshment;
+      else if (e === "refreshment") total += EXTRAS_PRICING.refreshment * drinkQuantity;
       else if (e === "lockerRoom") total += EXTRAS_PRICING.lockerRoom;
       else if (e === "eventTournament") total += EXTRAS_PRICING.eventTournament;
     }
     return total;
-  }, [extras]);
+  }, [extras, drinkQuantity]);
 
   if (!user) {
     return (
