@@ -529,6 +529,28 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const startMin = hourLabelToMinutes(hora);
   const endMin = startMin + dur * 60;
   const endLabel = minutesToLabel(endMin);
+  const isTournamentDate = (key: string) => tournamentDates.includes(key);
+  const occupiedLabelsForDate = (date: string) => {
+    const set = new Set<string>();
+    for (const slot of busySlots) {
+      if (slot.reservation_date !== date) continue;
+      const [hh, mm] = slot.start_time.split(":").map(Number);
+      const start = hh * 60 + (mm || 0);
+      for (let i = 0; i < (slot.duration_hours || 1); i++) set.add(minutesToLabel(start + i * 60));
+    }
+    return set;
+  };
+  const isHourDisabledForDate = (date: string, hour: string, durationValue = dur) => {
+    const mins = hourLabelToMinutes(hour);
+    const selDate = new Date(`${date}T00:00:00`);
+    const occ = occupiedLabelsForDate(date);
+    const tooSoon = isTodayISO(date) && mins < nowMinutes() + MIN_ADVANCE_MINUTES;
+    for (let i = 0; i < durationValue; i++) {
+      const h = minutesToLabel(mins + i * 60);
+      if (occ.has(h) || !isOpenAt(schedule, selDate, (mins + i * 60) % 1440)) return true;
+    }
+    return tooSoon;
+  };
 
   // Build set of hours covered by current selection for multi-hour highlight
   const selectedHourSet = useMemo(() => {
