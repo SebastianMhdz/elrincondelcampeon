@@ -330,31 +330,12 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const toggleExtra = (e: string) => setExtras((prev) => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
 
   const handleSubmit = async () => {
-    if (!nombre || !email || !tel || !fecha || canchaId === "") {
+    if (!nombre || !email || !tel || canchaId === "" || reservationPlan.length === 0) {
       toast({ title: text.errorTitle, description: text.completeAllFields, variant: "destructive" });
       return;
     }
     if (containsProfanity(nota) || containsProfanity(nombre)) {
       toast({ title: text.errorTitle, description: text.profanityWarning, variant: "destructive" });
-      return;
-    }
-    if (fecha < todayISO()) {
-      toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
-      return;
-    }
-    const startMin = hourLabelToMinutes(hora);
-    if (isTodayISO(fecha) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
-      toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
-      return;
-    }
-    const selDate = new Date(`${fecha}T00:00:00`);
-    const dur = Math.min(Number(duracion) || 1, maxDuration);
-    let withinSchedule = true;
-    for (let i = 0; i < dur; i++) {
-      if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) { withinSchedule = false; break; }
-    }
-    if (!withinSchedule) {
-      toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
       return;
     }
     const canchaDb = dbCanchas.find((item) => item.id === canchaId || item.legacy_id === Number(canchaId));
@@ -365,47 +346,84 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
       setSending(false); return;
     }
 
+    const minDate = reservationPlan.reduce((min, p) => p.date < min ? p.date : min, reservationPlan[0].date);
+    const maxDate = reservationPlan.reduce((max, p) => p.date > max ? p.date : max, reservationPlan[0].date);
+    const { data: liveBusy } = await supabase.rpc("get_cancha_busy_slots", { _cancha_id: canchaDb.id, _from: minDate, _to: maxDate });
+    for (const plan of reservationPlan) {
+      if (plan.date < todayISO()) {
+        toast({ title: text.errorTitle, description: text.pastDateError, variant: "destructive" });
+        setSending(false); return;
+      }
+      const startMin = hourLabelToMinutes(plan.hour);
+      if (isTodayISO(plan.date) && startMin < nowMinutes() + MIN_ADVANCE_MINUTES) {
+        toast({ title: text.errorTitle, description: text.tooSoonToBook, variant: "destructive" });
+        setSending(false); return;
+      }
+      const selDate = new Date(`${plan.date}T00:00:00`);
+      for (let i = 0; i < plan.duration; i++) {
+        if (!isOpenAt(schedule, selDate, (startMin + i * 60) % 1440)) {
+          toast({ title: text.errorTitle, description: text.outsideHoursLabel, variant: "destructive" });
+          setSending(false); return;
+        }
+      }
+      const blocked = ((liveBusy as any[]) ?? []).some((slot) => {
+        if (slot.reservation_date !== plan.date) return false;
+        const [hh, mm] = String(slot.start_time).split(":").map(Number);
+        return intervalsOverlap(startMin, startMin + plan.duration * 60, hh * 60 + (mm || 0), hh * 60 + (mm || 0) + (slot.duration_hours || 1) * 60);
+      });
+      if (blocked) {
+        toast({ title: text.slotUnavailable, description: `${text.slotUnavailableDesc} (${plan.date} ${plan.hour})`, variant: "destructive" });
+        setSending(false); return;
+      }
+    }
+
     // Build extras labels for email
     const extrasLabels = extras.map(e => {
       if (e === "vest") return `${text.vest} (${text.vestPrice})`;
       if (e === "ball") return `${text.ball} (${text.ballPrice})`;
-      if (e === "refreshment") return `${text.refreshment}: ${selectedDrink} (${text.refreshmentPrice})`;
+      if (e === "refreshment") return `${text.refreshment}: ${selectedDrink} x${drinkQuantity} (${formatCOP(EXTRAS_PRICING.refreshment * drinkQuantity)})`;
       if (e === "lockerRoom") return `${text.lockerRoom} (${text.lockerRoomPrice})`;
       if (e === "eventTournament") return `${text.eventTournament} (${text.eventTournamentPrice})`;
       return e;
     });
 
-    const { error: reservationError } = await supabase.from("reservations").insert({
+    const rows = reservationPlan.map((plan) => ({
       cancha_id: canchaDb.id,
       user_id: user.id,
       customer_name: nombre,
       customer_email: email,
       customer_phone: tel,
-      reservation_date: fecha,
-      start_time: `${convertHourTo24(hora)}:00`,
-      duration_hours: dur,
+      reservation_date: plan.date,
+      start_time: `${convertHourTo24(plan.hour)}:00`,
+      duration_hours: plan.duration,
       format_label: jugadores,
       extras: extrasLabels,
       note: nota || null,
-    });
+    }));
+    const { error: reservationError } = await supabase.from("reservations").insert(rows);
     if (reservationError) {
-      toast({ title: text.slotUnavailable, description: text.slotUnavailableDesc, variant: "destructive" });
+      if (tournamentMode?.tournamentId) await supabase.from("tournaments").delete().eq("id", tournamentMode.tournamentId);
+      toast({ title: text.slotUnavailable, description: reservationError.message || text.slotUnavailableDesc, variant: "destructive" });
       setSending(false); return;
     }
 
-    const breakdown = computeBreakdown(canchaDb.hourly_pricing as any, hora, dur, canchaDb.precio);
-    const totalPrice = breakdown.total + extrasTotal;
+    const planBreakdowns = reservationPlan.map((plan) => ({ ...plan, breakdown: computeBreakdown(canchaDb.hourly_pricing as any, plan.hour, plan.duration, canchaDb.precio) }));
+    const courtTotal = planBreakdowns.reduce((sum, item) => sum + item.breakdown.total, 0);
+    const totalPrice = courtTotal + extrasTotal;
     const deposit = Math.round(totalPrice * 0.30);
 
-    const desglose = breakdown.perHour.map(p => `${p.label}: ${formatCOP(p.price)}`).join(" | ");
-    const message = `Reserva de ${cancha.name}\nFecha: ${fecha} ${hora}\nDuración: ${dur}h\nExtras: ${extrasLabels.join(", ") || "—"}\nTotal cancha: ${formatCOP(breakdown.total)}\nExtras: ${formatCOP(extrasTotal)}\nTotal: ${formatCOP(totalPrice)}\nDepósito 30%: ${formatCOP(deposit)}`;
+    if (tournamentMode?.tournamentId) await supabase.from("tournaments").update({ status: "scheduled", signups_open: true }).eq("id", tournamentMode.tournamentId);
+    const totalHours = reservationPlan.reduce((sum, plan) => sum + plan.duration, 0);
+    const scheduleText = planBreakdowns.map((item) => `${item.date}: ${item.hour} — ${minutesToLabel(hourLabelToMinutes(item.hour) + item.duration * 60)} (${item.duration}h)`).join("\n");
+    const desglose = planBreakdowns.map((item) => `${item.date}: ${item.breakdown.perHour.map(p => `${p.label} ${formatCOP(p.price)}`).join(" | ")}`).join("\n");
+    const message = `${tournamentMode ? `Reserva financiera de torneo: ${tournamentMode.tournamentName}` : `Reserva de ${cancha.name}`}\nCancha: ${cancha.name}\nHorarios:\n${scheduleText}\nHoras totales: ${totalHours}h\nExtras: ${extrasLabels.join(", ") || "—"}\nTotal cancha: ${formatCOP(courtTotal)}\nExtras: ${formatCOP(extrasTotal)}\nTotal: ${formatCOP(totalPrice)}\nDepósito 30%: ${formatCOP(deposit)}`;
     try {
       await emailjs.send("service_nf4p2rr", "template_a4vyan5", {
         to_email: email, to_name: nombre, cancha_name: cancha.name, cancha_addr: cancha.addr,
-        fecha, hora, duracion: `${dur}h`, jugadores, extras: extrasLabels.join(", ") || "—",
-        nota: nota || "—", precio: `Total: ${formatCOP(totalPrice)} (Cancha: ${formatCOP(breakdown.total)} + Extras: ${formatCOP(extrasTotal)})`,
+        fecha: tournamentMode ? `${tournamentMode.startDate} → ${tournamentMode.endDate}` : reservationPlan[0].date, hora: reservationPlan[0].hour, duracion: `${totalHours}h`, jugadores, extras: extrasLabels.join(", ") || "—",
+        nota: nota || "—", precio: `Total: ${formatCOP(totalPrice)} (Cancha: ${formatCOP(courtTotal)} + Extras: ${formatCOP(extrasTotal)})`,
         phone: cancha.phone, message,
-        precio_hora: formatCOP(Math.round(breakdown.total / dur)),
+        precio_hora: formatCOP(Math.round(courtTotal / Math.max(totalHours, 1))),
         precio_total: formatCOP(totalPrice),
         deposito: formatCOP(deposit),
         saldo: formatCOP(totalPrice - deposit),
@@ -417,6 +435,7 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
     setLastDeposit(deposit);
     setLastTotal(totalPrice);
     setSent(true);
+    onTournamentReserved?.();
     setSending(false);
   };
 
