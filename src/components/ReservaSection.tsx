@@ -19,12 +19,14 @@ interface ReservaSectionProps {
   onGoAccount: () => void;
   onGoTournaments?: () => void;
   tournamentMode?: {
+    tournamentId?: string;
     startDate: string;
     endDate: string;
     canchaId: string;
     format: string;
     tournamentName: string;
   } | null;
+  onTournamentReserved?: () => void;
 }
 
 const horas = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM"];
@@ -132,7 +134,23 @@ const EXTRAS_PRICING: Record<string, number> = {
 
 const DRINK_OPTIONS = ["Gatorade", "Coca Cola", "Sprite", "Kola Román", "Cerveza Águila", "Cerveza Águila Light", "Agua embotellada", "Jugo Hit"];
 
-const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournaments, tournamentMode }: ReservaSectionProps) => {
+type ReservationPlan = { date: string; hour: string; duration: number };
+
+const datesBetween = (start: string, end: string) => {
+  if (!start || !end) return [];
+  const out: string[] = [];
+  const cur = new Date(`${start}T00:00:00`);
+  const last = new Date(`${end}T00:00:00`);
+  while (!Number.isNaN(cur.getTime()) && cur <= last && out.length < 370) {
+    out.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+};
+
+const intervalsOverlap = (aStart: number, aEnd: number, bStart: number, bEnd: number) => aStart < bEnd && bStart < aEnd;
+
+const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournaments, tournamentMode, onTournamentReserved }: ReservaSectionProps) => {
   const { toast } = useToast();
   const [canchaId, setCanchaId] = useState<string>(initialCancha ? String(initialCancha.id) : tournamentMode?.canchaId ?? "");
   const [nombre, setNombre] = useState(user?.user_metadata?.display_name ?? "");
@@ -159,6 +177,9 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const [recurringEndDate, setRecurringEndDate] = useState("");
   // Drink selection
   const [selectedDrink, setSelectedDrink] = useState(DRINK_OPTIONS[0]);
+  const [drinkQuantity, setDrinkQuantity] = useState(1);
+  const [tournamentScheduleMode, setTournamentScheduleMode] = useState<"preset" | "custom">("preset");
+  const [customTournamentTimes, setCustomTournamentTimes] = useState<Record<string, { hour: string; duration: string }>>({});
 
   useEffect(() => { if (initialCancha) setCanchaId(String(initialCancha.id)); }, [initialCancha]);
   useEffect(() => {
