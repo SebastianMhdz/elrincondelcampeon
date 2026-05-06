@@ -229,6 +229,26 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
   const schedule = useMemo(() => parseHours(selectedCancha?.hours), [selectedCancha]);
   const modalidades = useMemo(() => parseModalidades(selectedCancha?.tipo), [selectedCancha]);
 
+  const tournamentDates = useMemo(() => tournamentMode ? datesBetween(tournamentMode.startDate, tournamentMode.endDate) : [], [tournamentMode]);
+  const reservationPlan = useMemo<ReservationPlan[]>(() => {
+    if (!tournamentMode) return fecha ? [{ date: fecha, hour: hora, duration: Math.min(Number(duracion) || 1, maxDuration) }] : [];
+    return tournamentDates.map((date) => ({
+      date,
+      hour: tournamentScheduleMode === "custom" ? (customTournamentTimes[date]?.hour ?? hora) : hora,
+      duration: Math.min(Number(tournamentScheduleMode === "custom" ? (customTournamentTimes[date]?.duration ?? duracion) : duracion) || 1, maxDuration),
+    }));
+  }, [tournamentMode, tournamentDates, tournamentScheduleMode, customTournamentTimes, hora, duracion, fecha, maxDuration]);
+
+  useEffect(() => {
+    if (!tournamentMode) return;
+    setCanchaId(tournamentMode.canchaId);
+    setFecha(tournamentMode.startDate);
+    setJugadores(tournamentMode.format);
+    setExtras((prev) => prev.includes("eventTournament") ? prev : [...prev, "eventTournament"]);
+    setNota(`Torneo: ${tournamentMode.tournamentName}`);
+    setCalendarMonth(new Date(`${tournamentMode.startDate}T00:00:00`));
+  }, [tournamentMode]);
+
   useEffect(() => {
     if (modalidades.length && !modalidades.includes(jugadores)) {
       setJugadores(modalidades[0]);
