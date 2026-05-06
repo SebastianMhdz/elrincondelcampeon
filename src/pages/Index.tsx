@@ -29,7 +29,7 @@ const Index = () => {
   const [mapCancha, setMapCancha] = useState<Cancha | null>(null);
   const [reservaCancha, setReservaCancha] = useState<Cancha | null>(null);
   const [tournamentMode, setTournamentMode] = useState<{
-    startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string;
+    tournamentId?: string; startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string;
   } | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>(() => (localStorage.getItem("app-locale") as Locale) || "es");
@@ -55,7 +55,7 @@ const Index = () => {
   const handleMapSelect = (c: Cancha) => { setMapCancha(c); setTab("mapa"); };
   const handleReserveSelect = (c: Cancha) => { setReservaCancha(c); setTab("reservar"); };
   const handleSelectTournament = (id: string) => { setSelectedTournament(id); setTab("torneos"); };
-  const handleReserveForTournament = (tm: { startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => {
+  const handleReserveForTournament = (tm: { tournamentId?: string; startDate: string; endDate: string; canchaId: string; format: string; tournamentName: string }) => {
     setTournamentMode(tm);
     setReservaCancha(null);
     setTab("reservar");
@@ -103,7 +103,7 @@ const Index = () => {
               : <TorneosSection user={user} text={text} onSelectTournament={handleSelectTournament} onGoAccount={() => setTab("cuenta")} onReserveForTournament={handleReserveForTournament} />)}
             {tab === "mapa" && <MapSection initialCancha={mapCancha} text={text} />}
             {tab === "rutas" && <RutasSection initialCancha={mapCancha} text={text} />}
-            {tab === "reservar" && <ReservaSection initialCancha={reservaCancha} text={text} user={user} onGoAccount={() => setTab("cuenta")} onGoTournaments={() => setTab("torneos")} tournamentMode={tournamentMode} />}
+            {tab === "reservar" && <ReservaSection initialCancha={reservaCancha} text={text} user={user} onGoAccount={() => setTab("cuenta")} onGoTournaments={() => setTab("torneos")} tournamentMode={tournamentMode} onTournamentReserved={() => setTournamentMode(null)} />}
             {tab === "mis-reservas" && <MisReservasSection text={text} user={user} onGoAccount={() => setTab("cuenta")} />}
             {tab === "soporte" && <SoporteSection text={text} />}
             {tab === "cuenta" && <AccountSection text={text} user={user} />}
