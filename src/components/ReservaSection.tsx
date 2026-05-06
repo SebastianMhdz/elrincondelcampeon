@@ -805,9 +805,14 @@ const ReservaSection = ({ initialCancha, text, user, onGoAccount, onGoTournament
                 </div>
               </label>
               {extras.includes("refreshment") && (
-                <select value={selectedDrink} onChange={(e) => setSelectedDrink(e.target.value)} className="mt-2 w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground">
-                  {DRINK_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
+                <div className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                  <select value={selectedDrink} onChange={(e) => setSelectedDrink(e.target.value)} className="w-full rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground">
+                    {DRINK_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select value={drinkQuantity} onChange={(e) => setDrinkQuantity(Number(e.target.value))} className="rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground" aria-label="Cantidad de bebidas">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>x{n}</option>)}
+                  </select>
+                </div>
               )}
             </div>
             {/* Locker room */}
